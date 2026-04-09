@@ -1,0 +1,177 @@
+{% extends 'base_user.html' %}
+{% block title %}Your Cart | ZestyEat{% endblock %}
+{% block extra_head %}
+<style>
+    .cart-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 40px;
+        align-items: start;
+    }
+    .cart-items-card {
+        background: var(--light-gray);
+        border-radius: var(--radius-xl);
+        padding: 32px;
+        box-shadow: var(--shadow-sm);
+    }
+    .cart-item {
+        display: flex;
+        align-items: center;
+        padding: 20px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .cart-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .item-img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        margin-right: 20px;
+    }
+    .item-details {
+        flex: 1;
+    }
+    .item-name {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+    .item-price {
+        color: var(--slate);
+        font-weight: 500;
+    }
+    .qty-controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: var(--light-gray);
+        padding: 6px 12px;
+        border-radius: var(--radius-full);
+    }
+    .qty-btn {
+        background: none;
+        border: none;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        color: var(--slate);
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .qty-btn:hover { color: var(--primary); }
+    .item-total {
+        font-weight: 700;
+        font-size: 18px;
+        margin-left: 24px;
+        width: 80px;
+        text-align: right;
+    }
+    
+    .summary-card {
+        background: var(--light-gray);
+        border-radius: var(--radius-xl);
+        padding: 32px;
+        box-shadow: var(--shadow-lg);
+        position: sticky;
+        top: 100px;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        color: var(--slate);
+    }
+    .summary-row.total {
+        border-top: 2px dashed #e2e8f0;
+        padding-top: 16px;
+        margin-top: 16px;
+        font-weight: 700;
+        font-size: 20px;
+        color: var(--white);
+    }
+    
+    @media (max-width: 900px) {
+        .cart-layout { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-up">
+    <h1 style="margin-bottom: 32px; font-size: 32px;">Your Cart</h1>
+    
+    {% if cart_items %}
+    <div class="cart-layout">
+        <div class="cart-items-card">
+            <h2 style="font-size: 20px; margin-bottom: 24px;">Items</h2>
+            {% for item in cart_items %}
+            <div class="cart-item">
+                <img src="{{ item.menu_item.image_url if 'http' in item.menu_item.image_url else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400' }}" alt="{{ item.menu_item.name }}" class="item-img">
+                <div class="item-details">
+                    <div class="item-name">{{ item.menu_item.name }}</div>
+                    <div class="item-price">${{ "%.2f"|format(item.menu_item.price) }}</div>
+                </div>
+                
+                <div class="qty-controls">
+                    <form action="{{ url_for('user.update_cart', cart_item_id=item.id) }}" method="POST" style="display:inline-block">
+                        <input type="hidden" name="action" value="decrease">
+                        <button type="submit" class="qty-btn" aria-label="Decrease quantity">−</button>
+                    </form>
+                    <span style="font-weight:600;">{{ item.quantity }}</span>
+                    <form action="{{ url_for('user.update_cart', cart_item_id=item.id) }}" method="POST" style="display:inline-block">
+                        <input type="hidden" name="action" value="increase">
+                        <button type="submit" class="qty-btn" aria-label="Increase quantity">+</button>
+                    </form>
+                </div>
+                
+                <div class="item-total">
+                    ${{ "%.2f"|format(item.menu_item.price * item.quantity) }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="summary-card">
+            <h2 style="font-size: 20px; margin-bottom: 24px;">Order Summary</h2>
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span>${{ "%.2f"|format(subtotal) }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Delivery Fee</span>
+                <span>${{ "%.2f"|format(delivery_fee) }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Platform Fee</span>
+                <span>${{ "%.2f"|format(platform_fee) }}</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total</span>
+                <span>${{ "%.2f"|format(total) }}</span>
+            </div>
+            
+            <a href="{{ url_for('user.checkout') }}" class="btn btn-primary w-full mt-4" style="padding: 16px; font-size: 16px;">
+                Proceed to Checkout
+            </a>
+            
+            <p style="text-align: center; font-size: 12px; color: var(--gray); margin-top: 16px;">
+                Taxes are calculated at checkout.
+            </p>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg width="80" height="80" fill="none" stroke="var(--gray)" stroke-width="1.5" style="margin-bottom:20px"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <h3>Your cart is empty</h3>
+        <p>Looks like you haven't added anything to your cart yet.</p>
+        <a href="{{ url_for('user.home') }}" class="btn btn-primary mt-4">Browse Restaurants</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

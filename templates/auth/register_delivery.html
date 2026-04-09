@@ -1,0 +1,53 @@
+{% extends 'base_user.html' %}
+{% block title %}Become a Rider | ZestyEat{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-up">
+    <div class="auth-card" style="max-width:540px;">
+        <div class="auth-header">
+            <h2>Join the Fleet</h2>
+            <p>Deliver food and earn on your schedule</p>
+        </div>
+
+        <form method="POST">
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="username" class="form-control" required>
+            </div>
+            
+            <div class="grid grid-cols-2" style="gap:16px;">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2" style="gap:16px;">
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" name="phone" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vehicle Type</label>
+                    <select name="address" class="form-control" required>
+                        <option value="Bicycle">Bicycle</option>
+                        <option value="Motorcycle">Motorcycle</option>
+                        <option value="Car">Car</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-full mt-4" style="padding:14px; font-size:16px;">Register</button>
+        </form>
+
+        <div style="text-align:center; margin-top: 24px;">
+            <p style="color:var(--gray); display:inline;">Already a rider?</p>
+            <a href="{{ url_for('auth.login', role='delivery') }}" style="font-weight:600;">Log In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

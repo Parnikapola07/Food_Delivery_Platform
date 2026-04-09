@@ -1,0 +1,73 @@
+{% extends 'base_restaurant.html' %}
+{% block title %}Dashboard | ZestyEat Partner{% endblock %}
+{% block page_title %}Overview Dashboard{% endblock %}
+
+{% block content %}
+<div class="animate-fade-up">
+    <div class="stat-cards">
+        <div class="stat-card">
+            <div class="stat-title">Total Revenue</div>
+            <div class="stat-value">${{ "%.2f"|format(total_revenue if total_revenue else 0) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Active Orders</div>
+            <div class="stat-value">{{ active_orders|length }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Menu Items</div>
+            <div class="stat-value">{{ current_user.menus|length }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Average Rating</div>
+            <div class="stat-value">★ 4.8</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Orders</h3>
+            <a href="{{ url_for('restaurant.orders') }}" class="btn btn-outline" style="padding: 6px 16px; font-size:13px;">View All</a>
+        </div>
+        <div class="card-body" style="padding:0;">
+            {% if active_orders %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in active_orders[:5] %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>
+                            <div style="font-weight: 500;">{{ order.customer.username }}</div>
+                            <div style="font-size: 13px; color: var(--gray);">{{ order.created_at.strftime('%H:%M') }}</div>
+                        </td>
+                        <td>{{ order.items|length }} items</td>
+                        <td style="font-weight: 600;">${{ "%.2f"|format(order.total_amount) }}</td>
+                        <td>
+                            <span class="badge-status status-{{ order.status|lower|replace(' ', '-') }}">{{ order.status }}</span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('restaurant.orders') }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Manage</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <h4>No recent orders</h4>
+                <p>Waiting for customers to place an order.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

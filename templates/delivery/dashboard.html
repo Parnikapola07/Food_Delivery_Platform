@@ -1,0 +1,57 @@
+{% extends 'base_delivery.html' %}
+{% block title %}Available Orders | ZestyEat Rider{% endblock %}
+{% block page_title %}Available Delivery Jobs{% endblock %}
+
+{% block content %}
+<div class="animate-fade-up">
+    
+    <div class="card mb-8">
+        <div class="card-header" style="background:var(--light-gray); border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <h3>Orders Ready for Delivery</h3>
+            <span class="badge-status status-accepted" style="font-size:12px;">Looking for Riders</span>
+        </div>
+        <div class="card-body" style="padding:0; background:var(--light-gray);">
+            {% if available_orders %}
+            <div class="grid" style="gap:20px; padding: 24px;">
+                {% for order in available_orders %}
+                <div class="card" style="margin-bottom:0; box-shadow:var(--shadow-md);">
+                    <div class="card-body" style="padding:20px;">
+                        <div class="flex justify-between align-center mb-4 pb-4" style="border-bottom:1px dashed #cbd5e1;">
+                            <div>
+                                <h4 style="font-size:18px;">{{ order.restaurant.username }}</h4>
+                                <div style="color:var(--gray); font-size:13px;">Pickup: {{ order.restaurant.address }}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-weight:700; color:var(--success); font-size:18px;">Earn ${{ "%.2f"|format(order.delivery_fee) }}</div>
+                                <div style="color:var(--gray); font-size:13px;">{{ "%.1f"|format(order.delivery_fee/1.5) }} km</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div style="font-size:13px; font-weight:600; color:var(--slate); margin-bottom:4px;">Drop-off Location:</div>
+                            <div style="font-size:15px;">{{ order.delivery_address }}</div>
+                        </div>
+                        
+                        <form action="{{ url_for('delivery.accept_order', order_id=order.id) }}" method="POST">
+                            <button type="submit" class="btn btn-primary w-full" style="padding:12px;">Accept Delivery</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div style="width:64px;height:64px;border-radius:50%;background:var(--light-gray); border:1px solid rgba(255,255,255,0.05); display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:var(--shadow-sm);">
+                    <svg width="24" height="24" fill="none" stroke="var(--slate)" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h4>No available orders right now.</h4>
+                <p>Stay online, new orders will appear here automatically.</p>
+                <div class="mt-4">
+                    <button class="btn btn-outline" onclick="window.location.reload();">Refresh</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

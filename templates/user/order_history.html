@@ -1,0 +1,75 @@
+{% extends 'base_user.html' %}
+{% block title %}Order History | ZestyEat{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-up">
+    <h1 style="margin-bottom: 32px; font-size: 32px;">Order History</h1>
+    
+    {% if orders %}
+    <div class="grid" style="gap:24px;">
+        {% for order in orders %}
+        <div class="card" style="margin-bottom: 0;">
+            <div class="card-header" style="background: var(--light-gray);">
+                <div>
+                    <h3 style="font-size: 18px;">{{ order.restaurant.username }}</h3>
+                    <div style="font-size: 14px; color: var(--gray);">Order #{{ order.id }} • {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+                <div class="badge-status status-{{ order.status|lower|replace(' ', '-') }}">
+                    {{ order.status }}
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 16px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 16px;">
+                    {% for item in order.items %}
+                    <div style="display:flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                        <span>{{ item.quantity }}x {{ item.menu_item.name if item.menu_item else 'Unknown Item' }}</span>
+                        <span style="font-weight:500;">${{ "%.2f"|format(item.price_at_time * item.quantity) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: 700; font-size: 18px;">
+                        Total: ${{ "%.2f"|format(order.total_amount) }}
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <a href="{{ url_for('user.order_tracking', order_id=order.id) }}" class="btn btn-outline" style="padding: 8px 16px;">Track Order</a>
+                        
+                        {% if order.status == 'Delivered' and not order.review %}
+                        <!-- Review Modal Trigger (Simplified as a link for now, could be a modal) -->
+                        <button class="btn btn-primary" style="padding: 8px 16px;" onclick="document.getElementById('review-form-{{ order.id }}').style.display='block'">Leave Review</button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if order.status == 'Delivered' and not order.review %}
+                <div id="review-form-{{ order.id }}" style="display:none; margin-top:20px; padding-top:20px; border-top:1px dashed #cbd5e1;">
+                    <h4 style="margin-bottom:12px;">Rate your experience</h4>
+                    <form action="{{ url_for('user.submit_review', order_id=order.id) }}" method="POST">
+                        <select name="rating" class="form-control" style="margin-bottom: 12px; max-width: 150px;">
+                            <option value="5">★★★★★ (5)</option>
+                            <option value="4">★★★★☆ (4)</option>
+                            <option value="3">★★★☆☆ (3)</option>
+                            <option value="2">★★☆☆☆ (2)</option>
+                            <option value="1">★☆☆☆☆ (1)</option>
+                        </select>
+                        <textarea name="comment" class="form-control" rows="2" placeholder="Tell us how it was..." style="margin-bottom:12px;"></textarea>
+                        <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Submit Review</button>
+                    </form>
+                </div>
+                {% endif %}
+                
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg width="80" height="80" fill="none" stroke="var(--gray)" stroke-width="1.5" style="margin-bottom:20px"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <h3>No past orders</h3>
+        <p>You haven't placed any orders yet. Let's find something delicious!</p>
+        <a href="{{ url_for('user.home') }}" class="btn btn-primary mt-4">Browse Restaurants</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

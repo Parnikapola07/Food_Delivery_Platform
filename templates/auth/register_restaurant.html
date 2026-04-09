@@ -1,0 +1,47 @@
+{% extends 'base_user.html' %}
+{% block title %}Register Restaurant | ZestyEat{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-up">
+    <div class="auth-card" style="max-width:540px;">
+        <div class="auth-header">
+            <h2>Partner with Us</h2>
+            <p>Grow your business with ZestyEat Delivery</p>
+        </div>
+
+        <form method="POST">
+            <div class="form-group">
+                <label class="form-label">Restaurant Name</label>
+                <input type="text" name="username" class="form-control" required placeholder="e.g. Bella Italia">
+            </div>
+            
+            <div class="grid grid-cols-2" style="gap:16px;">
+                <div class="form-group">
+                    <label class="form-label">Business Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Business Phone</label>
+                <input type="text" name="phone" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Business Address</label>
+                <textarea name="address" class="form-control" rows="2" required></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-full mt-4" style="padding:14px; font-size:16px;">Register Restaurant</button>
+        </form>
+
+        <div style="text-align:center; margin-top: 24px;">
+            <p style="color:var(--gray); display:inline;">Already a partner?</p>
+            <a href="{{ url_for('auth.login', role='restaurant') }}" style="font-weight:600;">Log In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

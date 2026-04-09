@@ -1,0 +1,51 @@
+{% extends 'base_user.html' %}
+{% block title %}ZestyEat - Food Delivery{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="container hero-content animate-fade-up">
+        <h1 class="hero-title">Hungry? We've got you.</h1>
+        <p class="hero-subtitle">Order from the best local restaurants with easy, on-demand delivery.</p>
+        
+        <form class="search-bar-large" action="{{ url_for('user.home') }}" method="GET">
+            <input type="text" class="search-input-large" name="search" placeholder="Search for restaurants, cuisines, or dishes..." autocomplete="off">
+            <button type="submit" class="search-btn-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </button>
+        </form>
+    </div>
+</section>
+
+<section class="container mb-8">
+    <h2 style="margin-bottom: 24px; font-size: 28px;">Top Restaurants</h2>
+    
+    {% if restaurants %}
+    <div class="grid grid-cols-3">
+        {% for restaurant in restaurants %}
+        <a href="{{ url_for('user.restaurant_detail', restaurant_id=restaurant.id) }}" class="restaurant-card animate-fade-up" style="animation-delay: {{ loop.index0 * 100 }}ms;">
+            <div class="restaurant-img-wrap">
+                <img src="{{ restaurant.image_url if restaurant.image_url else 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600' }}" alt="{{ restaurant.username }}" class="restaurant-img">
+            </div>
+            <div class="restaurant-body">
+                <div class="flex justify-between align-center mb-4">
+                    <h3 class="restaurant-name">{{ restaurant.username }}</h3>
+                    <div class="rating-badge">★ 4.5</div>
+                </div>
+                <p class="restaurant-cuisine">{{ restaurant.address }}</p>
+                <div class="restaurant-meta">
+                    <span><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 25-35 min</span>
+                    <span>Free Delivery</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg width="64" height="64" fill="none" stroke="var(--gray)" stroke-width="1.5" style="margin-bottom:16px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m5-4h8m-8 0a2 2 0 00-2 2v2a2 2 0 002 2h8a2 2 0 002-2v-2a2 2 0 00-2-2m-8 0V5a2 2 0 012-2h4a2 2 0 012 2v6"></path></svg>
+        <h3>No restaurants found</h3>
+        <p>Try searching for a different location or cuisine.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

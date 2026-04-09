@@ -1,0 +1,46 @@
+{% extends 'base_restaurant.html' %}
+{% block title %}Add Menu Item | ZestyEat Partner{% endblock %}
+{% block page_title %}Add New Menu Item{% endblock %}
+
+{% block content %}
+<div class="animate-fade-up" style="max-width: 600px;">
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ url_for('restaurant.add_menu') }}" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="name">Item Name</label>
+                    <input type="text" id="name" name="name" class="form-control" required placeholder="e.g. Classic Cheeseburger">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Brief description of the item..."></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2" style="gap: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" for="price">Price ($)</label>
+                        <input type="number" step="0.01" id="price" name="price" class="form-control" required placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="category">Category</label>
+                        <input type="text" id="category" name="category" class="form-control" required placeholder="e.g. Mains, Sides, Beverages">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="image_url">Image URL</label>
+                    <input type="url" id="image_url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg">
+                    <small style="color:var(--gray);">Leave blank for default image.</small>
+                </div>
+                
+                <div class="flex gap-4 mt-8">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Add Item</button>
+                    <a href="{{ url_for('restaurant.manage_menu') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
