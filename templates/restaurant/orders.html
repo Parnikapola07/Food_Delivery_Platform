@@ -1,101 +1,138 @@
 {% extends 'base_restaurant.html' %}
-{% block title %}Manage Orders | ZestyEat Partner{% endblock %}
-{% block page_title %}Order Management{% endblock %}
+{% block title %}Incoming Orders | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="animate-fade-up">
+<div class="section-header fade-up">
+    <div>
+        <h1 class="section-title">Incoming Orders</h1>
+        <p class="section-subtitle">{{ orders|length }} total order{{ 's' if orders|length != 1 else '' }}</p>
+    </div>
+    <a href="{{ url_for('restaurant.dashboard') }}" class="btn btn-outline btn-sm" id="backDashBtn">← Dashboard</a>
+</div>
 
-    <div class="card mb-8">
-        <div class="card-header">
-            <h3>Active Orders</h3>
-        </div>
-        <div class="card-body" style="padding:0;">
-            {% if active_orders %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Order</th>
-                        <th>Details</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in active_orders %}
-                    <tr>
-                        <td>
-                            <strong>#{{ order.id }}</strong><br>
-                            <span style="font-size:13px; color:var(--gray);">{{ order.created_at.strftime('%H:%M') }}</span>
-                        </td>
-                        <td>
-                            <strong>{{ order.customer.username }}</strong><br>
-                            <span style="font-size:13px; color:var(--gray);">{{ order.items|length }} items</span>
-                        </td>
-                        <td><strong>${{ "%.2f"|format(order.total_amount) }}</strong></td>
-                        <td>
-                            <span class="badge-status status-{{ order.status|lower|replace(' ', '-') }}">{{ order.status }}</span>
-                        </td>
-                        <td>
-                            <form action="{{ url_for('restaurant.update_order_status', order_id=order.id) }}" method="POST" style="display:flex; gap:8px;">
-                                <select name="status" class="form-control" style="padding: 6px 12px; height:auto; min-width: 130px;">
-                                    <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                    <option value="Accepted" {% if order.status == 'Accepted' %}selected{% endif %}>Accepted</option>
-                                    <option value="Preparing" {% if order.status == 'Preparing' %}selected{% endif %}>Preparing</option>
-                                    <option value="Ready" {% if order.status == 'Ready' %}selected{% endif %}>Ready</option>
-                                    <option value="Rejected" {% if order.status == 'Rejected' %}selected{% endif %}>Reject</option>
-                                </select>
-                                <button type="submit" class="btn btn-primary" style="padding: 6px 12px;">Update</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty-state">
-                <h4>No active orders</h4>
+{% if orders %}
+
+{# Group orders #}
+{% set active_orders = [] %}
+{% set past_orders = [] %}
+{% for o in orders %}
+    {% if o.status in ['Pending', 'Accepted', 'Preparing', 'Ready'] %}
+        {% set _ = active_orders.append(o) %}
+    {% else %}
+        {% set _ = past_orders.append(o) %}
+    {% endif %}
+{% endfor %}
+
+{% if active_orders %}
+<h2 style="font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);margin:0 0 .85rem;">
+    🔴 Active Orders ({{ active_orders|length }})
+</h2>
+{% for order in active_orders %}
+<div class="panel" style="padding:1.35rem;margin-bottom:1rem;border-left:4px solid var(--brand-red);" id="order-{{ order.id }}">
+    <div class="flex-between" style="margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
+        <div>
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-400);margin-bottom:.3rem;">
+                {{ order.created_at.strftime('%b %d, %Y · %I:%M %p') }}
             </div>
+            <h3 style="margin:0;font-size:1.05rem;">Order #{{ order.id }}</h3>
+            <p class="meta" style="margin:.25rem 0 0;">
+                <strong>{{ order.customer.username }}</strong> &bull; {{ order.contact_phone }}
+            </p>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:1.25rem;font-weight:800;color:var(--brand-red);margin-bottom:.35rem;">₹{{ '%.2f' % order.total_amount }}</div>
+            {% if order.status == 'Pending' %}
+            <span class="status-pill status-pending">{{ order.status }}</span>
+            {% elif order.status in ['Accepted', 'Preparing'] %}
+            <span class="status-pill status-info">{{ order.status }}</span>
+            {% elif order.status == 'Ready' %}
+            <span class="status-pill status-success">{{ order.status }}</span>
             {% endif %}
         </div>
     </div>
 
-    <!-- Past Orders -->
-    <div class="card">
-        <div class="card-header">
-            <h3>Past Orders</h3>
+    <!-- Items -->
+    <div style="background:var(--ink-50);border-radius:var(--r-md);padding:.85rem 1rem;margin-bottom:.85rem;">
+        <p style="margin:0 0 .5rem;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);">Items</p>
+        {% for item in order.items %}
+        <div class="flex-between" style="font-size:.88rem;padding:.3rem 0;border-bottom:1px solid rgba(0,0,0,0.05);">
+            <span>{{ item.quantity }}× {{ item.menu_item.name }}</span>
+            <span style="font-weight:600;">₹{{ '%.0f' % (item.price_at_time * item.quantity) }}</span>
         </div>
-        <div class="card-body" style="padding:0;">
-            {% if past_orders %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Order</th>
-                        <th>Customer</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in past_orders %}
-                    <tr>
-                        <td>
-                            <strong>#{{ order.id }}</strong><br>
-                            <span style="font-size:13px; color:var(--gray);">{{ order.created_at.strftime('%Y-%m-%d') }}</span>
-                        </td>
-                        <td>{{ order.customer.username }}</td>
-                        <td>${{ "%.2f"|format(order.total_amount) }}</td>
-                        <td><span class="badge-status status-{{ order.status|lower|replace(' ', '-') }}">{{ order.status }}</span></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty-state">
-                <p>No past orders found.</p>
+        {% endfor %}
+        <div style="margin-top:.55rem;font-size:.82rem;color:var(--ink-500);">
+            📍 Deliver to: {{ order.delivery_address }}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:.65rem;justify-content:flex-end;flex-wrap:wrap;">
+        {% if order.status == 'Pending' %}
+        <form action="{{ url_for('restaurant.update_order_status', order_id=order.id) }}" method="POST" style="margin:0;">
+            <input type="hidden" name="status" value="Rejected">
+            <button type="submit" class="btn btn-outline btn-sm" id="rejectOrder-{{ order.id }}">✕ Reject</button>
+        </form>
+        <form action="{{ url_for('restaurant.update_order_status', order_id=order.id) }}" method="POST" style="margin:0;">
+            <input type="hidden" name="status" value="Accepted">
+            <button type="submit" class="btn btn-primary btn-sm" id="acceptOrder-{{ order.id }}">✓ Accept Order</button>
+        </form>
+
+        {% elif order.status == 'Accepted' %}
+        <form action="{{ url_for('restaurant.update_order_status', order_id=order.id) }}" method="POST" style="margin:0;">
+            <input type="hidden" name="status" value="Preparing">
+            <button type="submit" class="btn btn-primary btn-sm" id="prepareOrder-{{ order.id }}">👨‍🍳 Start Preparing</button>
+        </form>
+
+        {% elif order.status == 'Preparing' %}
+        <form action="{{ url_for('restaurant.update_order_status', order_id=order.id) }}" method="POST" style="margin:0;">
+            <input type="hidden" name="status" value="Ready">
+            <button type="submit" class="btn btn-primary btn-sm" id="readyOrder-{{ order.id }}">✅ Mark Ready for Pickup</button>
+        </form>
+
+        {% elif order.status == 'Ready' %}
+        <span class="status-pill status-success" style="font-size:.82rem;padding:.45rem .9rem;">Waiting for Delivery Partner…</span>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if past_orders %}
+<h2 style="font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);margin:1.5rem 0 .85rem;">
+    Past Orders ({{ past_orders|length }})
+</h2>
+{% for order in past_orders %}
+<div class="panel" style="padding:1.1rem;margin-bottom:.75rem;opacity:{% if order.status == 'Rejected' %}0.7{% else %}1{% endif %};" id="order-{{ order.id }}">
+    <div class="flex-between" style="flex-wrap:wrap;gap:.65rem;">
+        <div>
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-400);">
+                #{{ order.id }} &bull; {{ order.created_at.strftime('%b %d · %I:%M %p') }}
             </div>
+            <div style="font-weight:600;margin-top:.2rem;">{{ order.customer.username }}</div>
+            <p class="meta" style="margin:.2rem 0 0;">
+                {% for item in order.items %}{{ item.quantity }}× {{ item.menu_item.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+            </p>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-weight:700;font-size:1rem;margin-bottom:.35rem;">₹{{ '%.2f' % order.total_amount }}</div>
+            {% if order.status == 'Delivered' %}
+            <span class="status-pill status-success">{{ order.status }}</span>
+            {% elif order.status == 'Rejected' %}
+            <span class="status-pill status-danger">{{ order.status }}</span>
+            {% else %}
+            <span class="status-pill status-info">{{ order.status }}</span>
             {% endif %}
         </div>
     </div>
 </div>
+{% endfor %}
+{% endif %}
+
+{% else %}
+<div class="panel empty-state fade-up">
+    <div class="empty-icon">📦</div>
+    <h3>No orders yet</h3>
+    <p>Orders from customers will appear here once they start ordering from your restaurant.</p>
+</div>
+{% endif %}
 {% endblock %}

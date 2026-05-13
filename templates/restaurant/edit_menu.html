@@ -1,50 +1,67 @@
 {% extends 'base_restaurant.html' %}
-{% block title %}Edit Menu Item | ZestyEat Partner{% endblock %}
-{% block page_title %}Edit Menu Item{% endblock %}
+{% block title %}Edit {{ item.name }} | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="animate-fade-up" style="max-width: 600px;">
-    <div class="card">
-        <div class="card-body">
-            <form action="{{ url_for('restaurant.edit_menu', item_id=item.id) }}" method="POST">
-                <div class="form-group">
-                    <label class="form-label" for="name">Item Name</label>
-                    <input type="text" id="name" name="name" class="form-control" required value="{{ item.name }}">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="description">Description</label>
-                    <textarea id="description" name="description" class="form-control" rows="3">{{ item.description }}</textarea>
-                </div>
-                
-                <div class="grid grid-cols-2" style="gap: 20px;">
-                    <div class="form-group">
-                        <label class="form-label" for="price">Price ($)</label>
-                        <input type="number" step="0.01" id="price" name="price" class="form-control" required value="{{ item.price }}">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="category">Category</label>
-                        <input type="text" id="category" name="category" class="form-control" required value="{{ item.category }}">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="image_url">Image URL</label>
-                    <input type="url" id="image_url" name="image_url" class="form-control" value="{{ item.image_url if item.image_url != 'default_food.jpg' else '' }}">
-                </div>
-                
-                <div class="form-group flex align-center gap-2">
-                    <input type="checkbox" id="is_active" name="is_active" {% if item.is_active %}checked{% endif %} style="width: 18px; height: 18px; accent-color: var(--primary);">
-                    <label for="is_active" style="font-weight: 500; cursor: pointer;">Item is active (visible to customers)</label>
-                </div>
-                
-                <div class="flex gap-4 mt-8">
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Update Item</button>
-                    <a href="{{ url_for('restaurant.manage_menu') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
+<div style="max-width:700px;margin:0 auto;" class="fade-up">
+    <div class="section-header" style="margin-bottom:1.5rem;">
+        <div>
+            <h1 class="section-title">Edit Item</h1>
+            <p class="section-subtitle">Updating: <strong>{{ item.name }}</strong></p>
         </div>
+        <a href="{{ url_for('restaurant.manage_menu') }}" class="btn btn-outline btn-sm" id="backBtn">← Back to Menu</a>
+    </div>
+
+    <div class="panel" style="padding:2rem;">
+        <form method="POST" id="editMenuForm">
+            <div class="form-group">
+                <label class="form-label" for="name">Item Name <span style="color:var(--brand-red);">*</span></label>
+                <input type="text" name="name" id="name" class="form-control" required value="{{ item.name }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea name="description" id="description" class="form-control" rows="3">{{ item.description }}</textarea>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="price">Price (₹) <span style="color:var(--brand-red);">*</span></label>
+                    <input type="number" step="0.01" min="0" name="price" id="price" class="form-control" required value="{{ item.price }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="category">Category <span style="color:var(--brand-red);">*</span></label>
+                    <select name="category" id="category" class="form-control" required>
+                        {% set cats = ['Starters','Main Course','Breads','Rice & Biryani','Soups','Desserts','Beverages','Fast Food','Pizza','Rolls & Wraps'] %}
+                        {% for cat in cats %}
+                        <option value="{{ cat }}" {% if item.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                        {% if item.category not in cats %}
+                        <option value="{{ item.category }}" selected>{{ item.category }}</option>
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="image_url">Image URL</label>
+                <input type="url" name="image_url" id="image_url" class="form-control" value="{{ item.image_url if item.image_url != 'default_food.jpg' else '' }}"
+                    placeholder="https://example.com/food-image.jpg">
+            </div>
+
+            {% if item.image_url and item.image_url != 'default_food.jpg' %}
+            <div style="margin-bottom:1rem;">
+                <p class="form-label">Current Image</p>
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" style="max-height:160px;border-radius:var(--r-md);object-fit:cover;" onerror="this.style.display='none'">
+            </div>
+            {% endif %}
+
+            <div style="display:flex;gap:.75rem;margin-top:1.25rem;">
+                <a href="{{ url_for('restaurant.manage_menu') }}" class="btn btn-outline" id="cancelEditBtn">Cancel</a>
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;" id="updateBtn">
+                    💾 Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

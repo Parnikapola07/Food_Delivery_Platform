@@ -1,44 +1,47 @@
-{% extends 'base_user.html' %}
-{% block title %}Sign Up | ZestyEat{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Register — Customer | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="container animate-fade-up">
-    <div class="auth-card">
-        <div class="auth-header">
-            <h2>Create Account</h2>
-            <p>Join ZestyEat as a customer</p>
+<div class="auth-shell">
+    <div class="auth-card fade-up" style="max-width:520px;width:min(520px,100%);">
+        <div class="brand-wrap">
+            <div class="logo-big">🛍</div>
+            <h2>Create your account</h2>
+            <p class="subtitle">Start ordering from top restaurants today</p>
         </div>
 
-        <form method="POST">
-            <div class="form-group">
-                <label class="form-label">Full Name</label>
-                <input type="text" name="username" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" name="email" class="form-control" required>
-            </div>
-            <div class="grid grid-cols-2" style="gap:16px;">
+        <form method="POST" id="registerUserForm">
+            <div class="form-grid-2">
                 <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <label class="form-label" for="username">Full Name</label>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="Your name" required autocomplete="name">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Phone</label>
-                    <input type="text" name="phone" class="form-control" required>
+                    <label class="form-label" for="phone">Phone Number</label>
+                    <input type="tel" name="phone" id="phone" class="form-control" placeholder="+91 99999 00000" autocomplete="tel">
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">Delivery Address</label>
-                <textarea name="address" class="form-control" rows="2" required></textarea>
+                <label class="form-label" for="email">Email Address</label>
+                <input type="email" name="email" id="email" class="form-control" placeholder="you@example.com" required autocomplete="email">
             </div>
-            
-            <button type="submit" class="btn btn-primary w-full mt-4" style="padding:14px; font-size:16px;">Create Account</button>
+            <div class="form-group">
+                <label class="form-label" for="address">Delivery Address</label>
+                <textarea name="address" id="address" class="form-control" rows="2" placeholder="Your default delivery address" autocomplete="street-address"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" name="password" id="password" class="form-control" placeholder="Create a strong password" required autocomplete="new-password" minlength="6">
+                <p class="form-hint">Minimum 6 characters</p>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;font-size:.95rem;" id="registerSubmitBtn">
+                Create Account
+            </button>
         </form>
 
-        <div style="text-align:center; margin-top: 24px;">
-            <p style="color:var(--gray); display:inline;">Already have an account?</p>
-            <a href="{{ url_for('auth.login', role='user') }}" style="font-weight:600;">Log In</a>
+        <div class="auth-footer">
+            Already have an account? <a href="{{ url_for('auth.login', role='user') }}">Log in</a> &nbsp;|&nbsp;
+            <a href="{{ url_for('auth.role_select') }}" style="color:var(--ink-400);">Back</a>
         </div>
     </div>
 </div>

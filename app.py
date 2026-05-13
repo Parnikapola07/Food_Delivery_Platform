@@ -41,8 +41,6 @@ def create_app():
 
     @app.route('/home')
     @app.route('/user/home')
-    @app.route('/role-select')
-    @app.route('/auth/role-select')
     def legacy_redirects():
         return redirect(url_for('user.home'))
 

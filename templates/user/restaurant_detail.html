@@ -1,169 +1,247 @@
 {% extends 'base_user.html' %}
-{% block title %}{{ restaurant.username }} | ZestyEat{% endblock %}
-{% block extra_head %}
-<style>
-    .restaurant-banner {
-        height: 320px;
-        background: url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=1200') center/cover;
-        border-radius: var(--radius-xl);
-        margin-bottom: 40px;
-        position: relative;
-    }
-    .restaurant-banner-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-        border-radius: var(--radius-xl);
-        display: flex;
-        align-items: flex-end;
-        padding: 40px;
-        color: white;
-    }
-    .res-title {
-        font-size: 40px;
-        font-weight: 800;
-        color: white;
-    }
-    .res-meta {
-        color: rgba(255,255,255,0.8);
-        font-size: 16px;
-        display: flex;
-        gap: 20px;
-        margin-top: 8px;
-    }
-    
-    .menu-category {
-        margin-bottom: 40px;
-    }
-    .category-title {
-        font-size: 24px;
-        font-weight: 700;
-        margin-bottom: 24px;
-        padding-bottom: 8px;
-        border-bottom: 2px solid var(--light-gray);
-    }
-    
-    .food-card {
-        background: var(--light-gray);
-        border: 1px solid rgba(0,0,0,0.05);
-        border-radius: var(--radius-lg);
-        display: flex;
-        overflow: hidden;
-        transition: var(--transition-normal);
-    }
-    .food-card:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
-    }
-    .food-info {
-        flex: 1;
-        padding: 20px;
-    }
-    .food-name {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-    .food-price {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--slate);
-        margin-bottom: 8px;
-    }
-    .food-desc {
-        font-size: 14px;
-        color: var(--gray);
-        margin-bottom: 16px;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    .food-image {
-        width: 140px;
-        height: 100%;
-        object-fit: cover;
-    }
-</style>
-{% endblock %}
+{% block title %}{{ restaurant.username }} — Menu | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="container animate-fade-up">
-    <div class="restaurant-banner">
-        <div class="restaurant-banner-overlay">
-            <div>
-                <h1 class="res-title">{{ restaurant.username }}</h1>
-                <div class="res-meta">
-                    <span>★ 4.5 Rating</span>
-                    <span>{{ restaurant.address }}</span>
-                    <span>30-40 min</span>
-                </div>
-            </div>
+<!-- Restaurant Hero -->
+<div class="restaurant-hero fade-up"
+    style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=1600');"
+    aria-label="{{ restaurant.username }} restaurant">
+    <div class="restaurant-hero-content">
+        <h1>{{ restaurant.username }}</h1>
+        {% if restaurant.address %}
+        <p style="color:rgba(255,255,255,.75);font-size:.92rem;margin:.2rem 0 .65rem;">📍 {{ restaurant.address }}</p>
+        {% endif %}
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+            {% if reviews %}
+            <span class="status-pill status-success" style="font-size:.82rem;">
+                ★ {{ "%.1f"|format(reviews|map(attribute='rating')|sum / reviews|length) }} &nbsp;({{ reviews|length }} reviews)
+            </span>
+            {% endif %}
+            <span class="chip" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,.2);">🕐 30-40 min</span>
+            <span class="chip" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,.2);">🛵 Free Delivery</span>
         </div>
     </div>
+</div>
 
-    <!-- Check for existing cart from different restaurant -->
-    {% if cart_restaurant_id and cart_restaurant_id != restaurant.id %}
-    <div class="alert alert-warning" style="background:#fff3cd; color:#856404; padding:16px; border-radius:12px; margin-bottom:24px;">
-        Start a new order? You have items from another restaurant in your cart. Adding an item here will clear your existing cart. 
-    </div>
-    {% endif %}
+<div class="restaurant-layout">
+    <!-- MENU COLUMN -->
+    <div>
+        <h2 class="section-title" style="margin-bottom:1.1rem;">Menu</h2>
 
-    <div class="menu-category">
-        <h2 class="category-title">Menu Highlights</h2>
-        
         {% if menu_items %}
-        <div class="grid grid-cols-2">
-            {% for item in menu_items %}
-            <div class="food-card">
-                <div class="food-info">
-                    <h3 class="food-name">{{ item.name }}</h3>
-                    <div class="food-price">${{ "%.2f"|format(item.price) }}</div>
-                    <p class="food-desc">{{ item.description }}</p>
-                    
-                    <form action="{{ url_for('user.add_to_cart', menu_item_id=item.id) }}" method="POST">
-                        <button type="submit" class="add-btn">
-                            {% if item.id in cart_quantities %}
-                                Added ({{ cart_quantities[item.id] }}) - Add More
-                            {% else %}
-                                + Add
-                            {% endif %}
-                        </button>
-                    </form>
+        <div class="panel" style="overflow:hidden;">
+            {% set categories = menu_items | map(attribute='category') | unique | list %}
+            {% for category in categories %}
+            <div id="cat-{{ category|lower|replace(' ', '-') }}">
+                <div class="menu-section-title">{{ category }}</div>
+                {% for item in menu_items if item.category == category %}
+                <div class="menu-item" id="item-{{ item.id }}">
+                    <div class="menu-item-info">
+                        <h4>{{ item.name }}</h4>
+                        <div class="menu-item-price">₹{{ '%.0f' % item.price }}</div>
+                        {% if item.description %}
+                        <p class="meta" style="margin:.2rem 0 .65rem;line-height:1.5;">{{ item.description }}</p>
+                        {% endif %}
+
+                        {% if item.id in cart_quantities %}
+                            {% set cart_item = current_user.cart_items | selectattr("menu_item_id", "equalto", item.id) | first %}
+                            <div class="qty-controls">
+                                <form action="{{ url_for('user.update_cart', cart_item_id=cart_item.id) }}" method="POST" style="margin:0;">
+                                    <input type="hidden" name="action" value="decrease">
+                                    <button type="submit" class="qty-btn" title="Decrease">−</button>
+                                </form>
+                                <span class="qty-value">{{ cart_quantities[item.id] }}</span>
+                                <form action="{{ url_for('user.update_cart', cart_item_id=cart_item.id) }}" method="POST" style="margin:0;">
+                                    <input type="hidden" name="action" value="increase">
+                                    <button type="submit" class="qty-btn" title="Increase">+</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <form action="{{ url_for('user.add_to_cart', menu_item_id=item.id) }}" method="POST" class="add-form" style="margin-top:.65rem;">
+                                <button type="submit" class="btn btn-primary btn-sm" id="addBtn-{{ item.id }}"
+                                    {% if cart_restaurant_id and cart_restaurant_id != restaurant.id %}
+                                    onclick="return confirm('You have items from another restaurant. Add anyway?');"
+                                    {% endif %}>
+                                    + Add
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <img src="{{ item.image_url if item.image_url and item.image_url != 'default_food.jpg' else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400' }}"
+                            alt="{{ item.name }}" loading="lazy">
+                    </div>
                 </div>
-                {% if item.image_url and item.image_url != 'default_food.jpg' %}
-                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="food-image">
-                {% else %}
-                <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400" alt="{{ item.name }}" class="food-image">
-                {% endif %}
+                {% endfor %}
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div class="empty-state">
-            <h3>No menu items available</h3>
-            <p>This restaurant hasn't added any items to their menu yet.</p>
+        <div class="panel empty-state">
+            <div class="empty-icon">🍽️</div>
+            <h3>Menu not available yet</h3>
+            <p>This restaurant hasn't added items. Check back soon!</p>
         </div>
         {% endif %}
-    </div>
-    
-    {% if reviews %}
-    <div class="menu-category">
-        <h2 class="category-title">Customer Reviews</h2>
-        <div class="grid grid-cols-3">
-            {% for review in reviews %}
-            <div class="card">
-                <div class="card-body">
-                    <div class="flex align-center justify-between mb-4">
-                        <strong>{{ review.user.username }}</strong>
-                        <div class="rating-badge">★ {{ review.rating }}</div>
+
+        <!-- REVIEWS -->
+        <div style="margin-top:2rem;">
+            <h2 class="section-title" style="margin-bottom:1.1rem;">Customer Reviews</h2>
+            {% if reviews %}
+            <div style="display:flex;flex-direction:column;gap:.85rem;">
+                {% for review in reviews %}
+                <div class="panel" style="padding:1.1rem;">
+                    <div class="flex-between" style="margin-bottom:.6rem;">
+                        <div>
+                            <div style="font-weight:700;font-size:.95rem;">{{ review.order.customer.username }}</div>
+                            <div class="meta">{{ review.created_at.strftime('%b %d, %Y') }}</div>
+                        </div>
+                        <div>
+                            {% if review.rating >= 4 %}
+                            <span class="status-pill status-success">{{ review.rating }} ★</span>
+                            {% elif review.rating == 3 %}
+                            <span class="status-pill status-pending">{{ review.rating }} ★</span>
+                            {% else %}
+                            <span class="status-pill status-danger">{{ review.rating }} ★</span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <p class="food-desc">{{ review.comment }}</p>
+                    {% if review.comment %}
+                    <p style="margin:0;font-size:.9rem;color:var(--ink-600);font-style:italic;">"{{ review.comment }}"</p>
+                    {% endif %}
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% else %}
+            <div class="panel empty-state" style="padding:1.5rem;">
+                <p class="muted">No reviews yet. Be the first!</p>
+            </div>
+            {% endif %}
         </div>
     </div>
-    {% endif %}
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-sticky">
+        {% if current_user.cart_items %}
+        {% set user_cart = current_user.cart_items | selectattr("menu_item.restaurant_id", "equalto", restaurant.id) | list %}
+        {% if user_cart %}
+        <div class="panel" style="padding:1.2rem;margin-bottom:1rem;border:2px solid rgba(255,61,61,0.2);background:linear-gradient(135deg,rgba(255,61,61,0.04),rgba(255,112,67,0.02));">
+            <div class="flex-between" style="margin-bottom:.85rem;">
+                <h3 style="margin:0;font-size:.97rem;">Your Cart</h3>
+                <span class="badge" style="position:static;min-width:22px;height:22px;font-size:.78rem;">{{ user_cart|length }}</span>
+            </div>
+            <div style="max-height:180px;overflow-y:auto;margin-bottom:1rem;">
+                {% for ci in user_cart %}
+                <div class="flex-between" style="margin-bottom:.5rem;font-size:.88rem;">
+                    <span>{{ ci.quantity }}× {{ ci.menu_item.name }}</span>
+                    <span style="font-weight:600;">₹{{ '%.0f' % (ci.menu_item.price * ci.quantity) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{{ url_for('user.cart') }}" class="btn btn-primary" style="width:100%;justify-content:center;" id="viewCartBtn">View Cart →</a>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="panel" style="padding:1.2rem;margin-bottom:1rem;">
+            <h3 style="margin:0 0 .85rem;font-size:.97rem;">Restaurant Info</h3>
+            <div style="display:flex;flex-direction:column;gap:.6rem;font-size:.875rem;">
+                <div style="display:flex;gap:.75rem;">
+                    <span>⏱</span>
+                    <div>
+                        <div style="font-weight:600;">Delivery Time</div>
+                        <div class="meta">30-40 mins</div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div style="display:flex;gap:.75rem;">
+                    <span>🛵</span>
+                    <div>
+                        <div style="font-weight:600;">Delivery Fee</div>
+                        <div class="meta">₹5.00</div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div style="display:flex;gap:.75rem;">
+                    <span>🏅</span>
+                    <div>
+                        <div style="font-weight:600;">Standards</div>
+                        <div class="meta">FSSAI Certified</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" style="padding:1.2rem;">
+            <h3 style="margin:0 0 .75rem;font-size:.97rem;">Jump to Section</h3>
+            {% set categories = menu_items | map(attribute='category') | unique | list %}
+            {% for category in categories %}
+            <a href="#cat-{{ category|lower|replace(' ', '-') }}" class="nav-link" style="display:block;padding:.45rem .6rem;font-size:.875rem;">
+                {{ category }}
+            </a>
+            {% endfor %}
+            {% if not menu_items %}
+            <p class="meta">No sections yet.</p>
+            {% endif %}
+        </div>
+    </aside>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('submit', async function(e) {
+    const form = e.target.closest('form');
+    if (!form) return;
+    
+    // Check if it's an add or update form
+    if (form.classList.contains('add-form') || form.closest('.qty-controls')) {
+        e.preventDefault();
+        
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn) { 
+            btn.innerHTML = '…'; 
+            btn.style.pointerEvents = 'none'; 
+        }
+        
+        try {
+            const formData = new FormData(form);
+            const action = form.getAttribute('action');
+            
+            // Send the AJAX request
+            await fetch(action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            // Fetch updated page seamlessly
+            const res = await fetch(window.location.href);
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            
+            // Update menu and sidebar (restaurant layout)
+            const newLayout = doc.querySelector('.restaurant-layout');
+            const currentLayout = document.querySelector('.restaurant-layout');
+            if (newLayout && currentLayout) {
+                currentLayout.innerHTML = newLayout.innerHTML;
+            }
+            
+            // Update the cart badge
+            const newBadge = doc.querySelector('.icon-button .badge');
+            const currentBadge = document.querySelector('.icon-button .badge');
+            if (newBadge && currentBadge) {
+                currentBadge.textContent = newBadge.textContent;
+            }
+            
+        } catch (err) {
+            // fallback
+            window.location.reload();
+        }
+    }
+});
+</script>
 {% endblock %}

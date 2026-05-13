@@ -6,6 +6,10 @@ from extensions import db, bcrypt
 auth_bp = Blueprint('auth', __name__)
 
 
+@auth_bp.route('/role-select')
+def role_select():
+    return render_template('role_select.html')
+
 @auth_bp.route('/login/<role>', methods=['GET', 'POST'])
 def login(role):
     if role not in ['user', 'restaurant', 'delivery']:

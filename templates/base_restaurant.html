@@ -8,51 +8,90 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_head %}{% endblock %}
 </head>
-<body class="dashboard-layout">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <span class="brand-mark">Z</span>
-            <span class="brand-text">Partner</span>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="{{ url_for('restaurant.dashboard') }}" class="nav-item {% if request.endpoint == 'restaurant.dashboard' %}active{% endif %}">Dashboard</a>
-            <a href="{{ url_for('restaurant.orders') }}" class="nav-item {% if request.endpoint == 'restaurant.orders' %}active{% endif %}">Orders</a>
-            <a href="{{ url_for('restaurant.manage_menu') }}" class="nav-item {% if 'menu' in request.endpoint %}active{% endif %}">Menu Management</a>
-            <a href="{{ url_for('auth.logout') }}" class="nav-item logout">Logout</a>
-        </nav>
-    </aside>
+<body>
+    <nav class="topbar" id="topbar">
+        <div class="topbar-inner">
+            <a href="{{ url_for('restaurant.dashboard') }}" class="brand">
+                <span class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span>
+                <span class="brand-text">Partner</span>
+            </a>
+            
+            <div></div> <!-- Spacer for grid layout -->
 
-    <div class="dashboard-main">
-        <header class="dashboard-header">
-            <h2>{% block page_title %}Overview{% endblock %}</h2>
-            <div class="user-profile">
-                <span>{{ current_user.username }}</span>
-                <div class="avatar">{{ current_user.username[0]|upper }}</div>
+            <div class="nav-actions">
+                <span style="font-weight:600; font-size:0.875rem; margin-right:1rem;">{{ current_user.username }}</span>
+                <a href="{{ url_for('auth.logout') }}" class="nav-button secondary">Logout</a>
             </div>
-        </header>
-        
-        <div class="alerts-container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="toast toast-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
         </div>
+    </nav>
 
-        <div class="dashboard-content">
-            {% block content %}{% endblock %}
-        </div>
+    <div class="alerts-container" id="toast-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast toast-{{ category }} js-auto-dismiss" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
+    <main class="container page-shell">
+        <div class="dashboard-layout">
+            <!-- Sidebar Nav -->
+            <aside class="sidebar-nav fade-up">
+                <h4>Restaurant Panel</h4>
+                <a href="{{ url_for('restaurant.dashboard') }}" class="nav-item {% if request.endpoint == 'restaurant.dashboard' %}active{% endif %}" id="navOverview">
+                    <span>📊</span> Overview
+                </a>
+                <a href="{{ url_for('restaurant.manage_menu') }}" class="nav-item {% if request.endpoint == 'restaurant.manage_menu' %}active{% endif %}" id="navManageMenu">
+                    <span>🍽️</span> Manage Menu
+                </a>
+                <a href="{{ url_for('restaurant.add_menu') }}" class="nav-item {% if request.endpoint == 'restaurant.add_menu' %}active{% endif %}" id="navAddItem">
+                    <span>➕</span> Add Menu Item
+                </a>
+                <a href="{{ url_for('restaurant.orders') }}" class="nav-item {% if request.endpoint == 'restaurant.orders' %}active{% endif %}" id="navOrders">
+                    <span>📦</span> Incoming Orders
+                </a>
+                <div style="margin-top:1.5rem;padding:.75rem .8rem;background:var(--brand-gradient-soft);border-radius:var(--r-sm);border:1px solid rgba(255,61,61,0.12);">
+                    <div style="font-size:.78rem;font-weight:700;color:var(--brand-red-dark);margin-bottom:.25rem;">Logged in as</div>
+                    <div style="font-weight:600;font-size:.88rem;color:var(--ink-900);">{{ current_user.username }}</div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="fade-up-1">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </main>
+
     <script>
+        const topbar = document.getElementById('topbar');
+        window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 20));
+        
         setTimeout(() => {
-            document.querySelectorAll('.toast').forEach(t => {
+            document.querySelectorAll('.toast, .js-auto-dismiss').forEach(t => {
                 t.style.opacity = '0';
                 setTimeout(() => t.remove(), 300);
             });
         }, 4000);
+
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.setAttribute('role', 'alert');
+            toast.innerText = message;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
     </script>
     {% block extra_js %}{% endblock %}
 </body>

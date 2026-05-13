@@ -48,6 +48,8 @@ class Order(db.Model):
     platform_fee = db.Column(db.Float, nullable=False, default=2.0)
     delivery_address = db.Column(db.Text, nullable=False)
     contact_phone = db.Column(db.String(20), nullable=False)
+    restaurant_instructions = db.Column(db.Text, nullable=True)
+    delivery_instructions = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     items = db.relationship('OrderItem', backref='order', lazy=True)

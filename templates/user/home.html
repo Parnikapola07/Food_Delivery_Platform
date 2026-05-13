@@ -1,51 +1,242 @@
 {% extends 'base_user.html' %}
-{% block title %}ZestyEat - Food Delivery{% endblock %}
+{% block title %}Home — Discover Food | ZestyEat{% endblock %}
 
 {% block content %}
-<section class="hero-section">
-    <div class="container hero-content animate-fade-up">
-        <h1 class="hero-title">Hungry? We've got you.</h1>
-        <p class="hero-subtitle">Order from the best local restaurants with easy, on-demand delivery.</p>
-        
-        <form class="search-bar-large" action="{{ url_for('user.home') }}" method="GET">
-            <input type="text" class="search-input-large" name="search" placeholder="Search for restaurants, cuisines, or dishes..." autocomplete="off">
-            <button type="submit" class="search-btn-icon">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </button>
-        </form>
+<!-- HERO -->
+<section class="hero fade-up" style="background-image:url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1800');" aria-label="Hero Section">
+    <div class="hero-content">
+        <div class="hero-tag">🔥 100+ Top Restaurants</div>
+        <h1>Craving something <span>delicious?</span></h1>
+        <p>From premium fine dining to street food, discover the best restaurants near you — delivered fast.</p>
+        <div class="hero-search" role="search">
+            <input type="text" id="heroSearchInput" placeholder="Search restaurants, cuisines, or dishes…" value="{{ request.args.get('search', '') }}" autocomplete="off" aria-label="Search food">
+            <button type="button" class="btn btn-primary" id="heroSearchBtn">🔍 Search</button>
+        </div>
+    </div>
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <span class="num">100+</span>
+            <span class="lbl">Restaurants</span>
+        </div>
+        <div class="hero-stat">
+            <span class="num">30min</span>
+            <span class="lbl">Avg Delivery</span>
+        </div>
+        <div class="hero-stat">
+            <span class="num">4.8★</span>
+            <span class="lbl">Avg Rating</span>
+        </div>
     </div>
 </section>
 
-<section class="container mb-8">
-    <h2 style="margin-bottom: 24px; font-size: 28px;">Top Restaurants</h2>
-    
-    {% if restaurants %}
-    <div class="grid grid-cols-3">
-        {% for restaurant in restaurants %}
-        <a href="{{ url_for('user.restaurant_detail', restaurant_id=restaurant.id) }}" class="restaurant-card animate-fade-up" style="animation-delay: {{ loop.index0 * 100 }}ms;">
-            <div class="restaurant-img-wrap">
-                <img src="{{ restaurant.image_url if restaurant.image_url else 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600' }}" alt="{{ restaurant.username }}" class="restaurant-img">
-            </div>
-            <div class="restaurant-body">
-                <div class="flex justify-between align-center mb-4">
-                    <h3 class="restaurant-name">{{ restaurant.username }}</h3>
-                    <div class="rating-badge">★ 4.5</div>
-                </div>
-                <p class="restaurant-cuisine">{{ restaurant.address }}</p>
-                <div class="restaurant-meta">
-                    <span><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 25-35 min</span>
-                    <span>Free Delivery</span>
-                </div>
-            </div>
-        </a>
+<!-- CATEGORIES -->
+<section class="categories-section fade-up-1" aria-label="Food Categories">
+    <div class="section-header">
+        <h2 class="section-title">Browse by Category</h2>
+    </div>
+    <div class="category-row">
+        {% set cats = [
+            ('🍕','Pizza'),
+            ('🍔','Burgers'),
+            ('🍜','Noodles'),
+            ('🥗','Healthy'),
+            ('🌮','Mexican'),
+            ('🍣','Sushi'),
+            ('🍰','Desserts'),
+            ('☕','Beverages'),
+            ('🍛','Indian')
+        ] %}
+        {% for icon, name in cats %}
+        <div class="category-card" onclick="filterByCategory('{{ name }}')">
+            <span class="category-icon">{{ icon }}</span>
+            <p>{{ name }}</p>
+        </div>
         {% endfor %}
     </div>
-    {% else %}
-    <div class="empty-state">
-        <svg width="64" height="64" fill="none" stroke="var(--gray)" stroke-width="1.5" style="margin-bottom:16px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m5-4h8m-8 0a2 2 0 00-2 2v2a2 2 0 002 2h8a2 2 0 002-2v-2a2 2 0 00-2-2m-8 0V5a2 2 0 012-2h4a2 2 0 012 2v6"></path></svg>
-        <h3>No restaurants found</h3>
-        <p>Try searching for a different location or cuisine.</p>
-    </div>
-    {% endif %}
 </section>
+
+<!-- SEARCH RESULTS (live) -->
+<div id="searchResultsArea">
+    <!-- DEFAULT LIST -->
+    <section id="defaultRestaurants" aria-label="All Restaurants">
+        <div class="section-header fade-up-2">
+            <h2 class="section-title">Top Restaurants Near You</h2>
+            <span class="section-subtitle">{{ restaurants|length }} available now</span>
+        </div>
+
+        {% if restaurants %}
+        <div class="grid" id="restaurantGrid">
+            {% set images = [
+                'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800',
+                'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=800',
+                'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800',
+                'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&q=80&w=800',
+                'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&q=80&w=800',
+                'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&q=80&w=800'
+            ] %}
+            {% set offers = ['Up to 30% OFF', '🎁 Free Delivery', 'Buy 2 Get 1', '20% OFF', 'New Arrival! 🆕', 'Weekend Special'] %}
+            {% set ratings = ['4.8', '4.5', '4.7', '4.6', '4.3', '4.9'] %}
+            {% set times = ['20-30 min', '30-40 min', '25-35 min', '15-25 min', '35-45 min', '20-30 min'] %}
+            {% set cuisines = ['Multi-cuisine', 'North Indian', 'Italian', 'Chinese', 'Fast Food', 'Continental'] %}
+
+            {% for restaurant in restaurants %}
+            {% set idx = loop.index0 % 6 %}
+            <a href="{{ url_for('user.restaurant_detail', restaurant_id=restaurant.id) }}" class="restaurant-card fade-up" id="rcard-{{ restaurant.id }}" data-delay="{{ loop.index0 * 0.05 }}s">
+                <div class="restaurant-image" style="background-image:url('{{ images[idx] }}');">
+                    <span class="offer-tag {% if loop.index % 3 == 0 %}hot{% endif %}">{{ offers[idx] }}</span>
+                    <span class="rating-badge">★ {{ ratings[idx] }}</span>
+                </div>
+                <div class="card-content">
+                    <div class="card-title-row">
+                        <h3>{{ restaurant.username }}</h3>
+                    </div>
+                    <p class="meta" style="margin:.2rem 0 .45rem;">{{ cuisines[idx] }}{% if restaurant.address %} &bull; {{ restaurant.address[:30] }}{% endif %}</p>
+                    <div class="delivery-chips">
+                        <span class="chip">⏱ {{ times[idx] }}</span>
+                        <span class="chip">🛵 Free delivery</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="panel empty-state">
+            <div class="empty-icon">🍽️</div>
+            <h3>No restaurants yet</h3>
+            <p>Be the first to register a restaurant on ZestyEat!</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- LIVE SEARCH RESULTS -->
+    <section id="liveSearchResults" style="display:none;" aria-live="polite">
+        <h2 class="section-title" id="searchResultsTitle">Search Results</h2>
+
+        <div id="restaurantsSection" style="margin-bottom:2rem;">
+            <h3 style="font-size:1rem;font-weight:600;color:var(--ink-500);margin:1rem 0 .75rem;text-transform:uppercase;letter-spacing:.06em;">Restaurants</h3>
+            <div class="grid" id="restaurantsGrid"></div>
+            <div id="noRestaurantsMsg" class="panel empty-state" style="display:none;padding:1.5rem;">
+                <p class="muted">No restaurants match your search.</p>
+            </div>
+        </div>
+
+        <div id="menuItemsSection">
+            <h3 style="font-size:1rem;font-weight:600;color:var(--ink-500);margin:1rem 0 .75rem;text-transform:uppercase;letter-spacing:.06em;">Dishes & Menu Items</h3>
+            <div class="grid" id="menuItemsGrid"></div>
+            <div id="noMenuItemsMsg" class="panel empty-state" style="display:none;padding:1.5rem;">
+                <p class="muted">No dishes match your search.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Apply animation delays from data attributes to satisfy CSS linters
+    document.querySelectorAll('[data-delay]').forEach(el => {
+        el.style.animationDelay = el.dataset.delay;
+    });
+
+    const heroInput = document.getElementById('heroSearchInput');
+    const heroBtn = document.getElementById('heroSearchBtn');
+    const defaultSection = document.getElementById('defaultRestaurants');
+    const liveSection = document.getElementById('liveSearchResults');
+    const restaurantsGrid = document.getElementById('restaurantsGrid');
+    const menuItemsGrid = document.getElementById('menuItemsGrid');
+    const noRestMsg = document.getElementById('noRestaurantsMsg');
+    const noMenuMsg = document.getElementById('noMenuItemsMsg');
+    const searchTitle = document.getElementById('searchResultsTitle');
+    let debounceTimer;
+
+    const IMAGES = [
+        'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&q=80&w=800'
+    ];
+
+    function showLive() { defaultSection.style.display='none'; liveSection.style.display='block'; }
+    function showDefault() { defaultSection.style.display='block'; liveSection.style.display='none'; }
+
+    function fetchResults(q) {
+        if (!q) { showDefault(); return; }
+        fetch(`/user/api/search?q=${encodeURIComponent(q)}`)
+            .then(r => r.json())
+            .then(data => {
+                showLive();
+                searchTitle.textContent = `Results for "${q}"`;
+                renderRestaurants(data.restaurants);
+                renderMenuItems(data.menu_items);
+            })
+            .catch(() => showDefault());
+    }
+
+    heroBtn.addEventListener('click', () => fetchResults(heroInput.value.trim()));
+    heroInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const q = this.value.trim();
+        if (!q) { showDefault(); return; }
+        debounceTimer = setTimeout(() => fetchResults(q), 280);
+    });
+    heroInput.addEventListener('keydown', e => { if (e.key === 'Enter') fetchResults(heroInput.value.trim()); });
+
+    function renderRestaurants(items) {
+        restaurantsGrid.innerHTML = '';
+        if (!items.length) { restaurantsGrid.style.display='none'; noRestMsg.style.display='block'; return; }
+        restaurantsGrid.style.display='grid'; noRestMsg.style.display='none';
+        items.forEach((r, i) => {
+            const img = IMAGES[i % IMAGES.length];
+            const a = document.createElement('a');
+            a.href = `/user/restaurant/${r.id}`;
+            a.className = 'restaurant-card';
+            a.innerHTML = `
+                <div class="restaurant-image" style="background-image:url('${r.image_url || img}')">
+                    <span class="offer-tag">See Menu</span>
+                    <span class="rating-badge">★ 4.5</span>
+                </div>
+                <div class="card-content">
+                    <div class="card-title-row"><h3>${r.name}</h3></div>
+                    <p class="meta" style="margin:.2rem 0 .45rem;">${r.address || 'Nearby'}</p>
+                    <div class="delivery-chips"><span class="chip">⏱ 30-40 min</span></div>
+                </div>`;
+            restaurantsGrid.appendChild(a);
+        });
+    }
+
+    function renderMenuItems(items) {
+        menuItemsGrid.innerHTML = '';
+        if (!items.length) { menuItemsGrid.style.display='none'; noMenuMsg.style.display='block'; return; }
+        menuItemsGrid.style.display='grid'; noMenuMsg.style.display='none';
+        items.forEach((item, i) => {
+            const img = IMAGES[i % IMAGES.length];
+            const d = document.createElement('div');
+            d.className = 'restaurant-card';
+            d.style.cursor = 'pointer';
+            d.onclick = () => window.location = `/user/restaurant/${item.restaurant_id}`;
+            d.innerHTML = `
+                <div class="restaurant-image" style="background-image:url('${item.image_url || img}');height:160px;"></div>
+                <div class="card-content">
+                    <div class="card-title-row">
+                        <h3>${item.name}</h3>
+                        <span style="font-weight:800;color:var(--brand-red);">₹${item.price.toFixed(0)}</span>
+                    </div>
+                    <p class="meta" style="margin:.2rem 0;">From: <strong>${item.restaurant_name}</strong></p>
+                    <p class="meta">${item.description || 'Freshly prepared with quality ingredients.'}</p>
+                </div>`;
+            menuItemsGrid.appendChild(d);
+        });
+    }
+
+    // Category filter (visual only — highlights card matching name in restaurant cards)
+    window.filterByCategory = function(cat) {
+        document.querySelectorAll('.category-card').forEach(c => {
+            c.classList.toggle('active', c.querySelector('p').textContent === cat);
+        });
+        const q = cat.toLowerCase();
+        fetchResults(q);
+    };
+});
+</script>
 {% endblock %}

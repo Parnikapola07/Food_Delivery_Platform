@@ -1,57 +1,92 @@
 {% extends 'base_delivery.html' %}
-{% block title %}Available Orders | ZestyEat Rider{% endblock %}
-{% block page_title %}Available Delivery Jobs{% endblock %}
+{% block title %}Delivery Dashboard | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="animate-fade-up">
-    
-    <div class="card mb-8">
-        <div class="card-header" style="background:var(--light-gray); border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <h3>Orders Ready for Delivery</h3>
-            <span class="badge-status status-accepted" style="font-size:12px;">Looking for Riders</span>
-        </div>
-        <div class="card-body" style="padding:0; background:var(--light-gray);">
-            {% if available_orders %}
-            <div class="grid" style="gap:20px; padding: 24px;">
-                {% for order in available_orders %}
-                <div class="card" style="margin-bottom:0; box-shadow:var(--shadow-md);">
-                    <div class="card-body" style="padding:20px;">
-                        <div class="flex justify-between align-center mb-4 pb-4" style="border-bottom:1px dashed #cbd5e1;">
-                            <div>
-                                <h4 style="font-size:18px;">{{ order.restaurant.username }}</h4>
-                                <div style="color:var(--gray); font-size:13px;">Pickup: {{ order.restaurant.address }}</div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-weight:700; color:var(--success); font-size:18px;">Earn ${{ "%.2f"|format(order.delivery_fee) }}</div>
-                                <div style="color:var(--gray); font-size:13px;">{{ "%.1f"|format(order.delivery_fee/1.5) }} km</div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <div style="font-size:13px; font-weight:600; color:var(--slate); margin-bottom:4px;">Drop-off Location:</div>
-                            <div style="font-size:15px;">{{ order.delivery_address }}</div>
-                        </div>
-                        
-                        <form action="{{ url_for('delivery.accept_order', order_id=order.id) }}" method="POST">
-                            <button type="submit" class="btn btn-primary w-full" style="padding:12px;">Accept Delivery</button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <div style="width:64px;height:64px;border-radius:50%;background:var(--light-gray); border:1px solid rgba(255,255,255,0.05); display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:var(--shadow-sm);">
-                    <svg width="24" height="24" fill="none" stroke="var(--slate)" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <h4>No available orders right now.</h4>
-                <p>Stay online, new orders will appear here automatically.</p>
-                <div class="mt-4">
-                    <button class="btn btn-outline" onclick="window.location.reload();">Refresh</button>
-                </div>
-            </div>
-            {% endif %}
-        </div>
+<div class="section-header fade-up">
+    <div>
+        <h1 class="section-title">Delivery Dashboard</h1>
+        <p class="section-subtitle">Welcome back, <strong>{{ current_user.username }}</strong> 👋</p>
+    </div>
+    <button onclick="window.location.reload()" class="btn btn-outline btn-sm" id="refreshBtn">🔄 Refresh</button>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid fade-up-1" style="margin-bottom:1.75rem;">
+    <div class="kpi-card kpi-red">
+        <div class="kpi-label">Today's Deliveries</div>
+        <div class="kpi-value">{{ today_deliveries }}</div>
+        <div class="kpi-sub">Orders completed</div>
+    </div>
+    <div class="kpi-card kpi-green">
+        <div class="kpi-label">Today's Earnings</div>
+        <div class="kpi-value">₹{{ '%.0f' % today_earnings }}</div>
+        <div class="kpi-sub">Delivery fees earned</div>
+    </div>
+    <div class="kpi-card kpi-dark">
+        <div class="kpi-label">Available Orders</div>
+        <div class="kpi-value">{{ available_orders|length }}</div>
+        <div class="kpi-sub">Ready to deliver now</div>
     </div>
 </div>
+
+<!-- Available Orders -->
+<div class="section-header" style="margin-bottom:.85rem;">
+    <h2 style="font-size:1.05rem;font-weight:700;margin:0;">Available Deliveries</h2>
+    <a href="{{ url_for('delivery.assigned_orders') }}" class="btn btn-outline btn-sm" id="myDeliveriesBtn">My Deliveries →</a>
+</div>
+
+{% if available_orders %}
+<div style="display:flex;flex-direction:column;gap:1rem;" class="fade-up-2">
+    {% for order in available_orders %}
+    <div class="panel" style="padding:1.35rem;border-left:4px solid var(--color-success);" id="availOrder-{{ order.id }}">
+        <div class="flex-between" style="margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
+            <div>
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-400);margin-bottom:.3rem;">
+                    {{ order.created_at.strftime('%b %d · %I:%M %p') }}
+                </div>
+                <h3 style="margin:0;font-size:1.05rem;">Order #{{ order.id }}</h3>
+                <p class="meta" style="margin:.25rem 0 0;">From <strong>{{ order.restaurant.username }}</strong></p>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:1.25rem;font-weight:800;color:var(--color-success);margin-bottom:.3rem;">
+                    ₹{{ '%.2f' % order.delivery_fee }} <span style="font-size:.75rem;font-weight:500;color:var(--ink-400);">earning</span>
+                </div>
+                <span class="status-pill status-success">Ready to Pickup</span>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem;">
+            <div style="background:var(--ink-50);border-radius:var(--r-md);padding:.85rem;">
+                <p style="margin:0 0 .3rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);">📍 Pickup From</p>
+                <p style="margin:0;font-weight:500;font-size:.88rem;">{{ order.restaurant.address or order.restaurant.username }}</p>
+            </div>
+            <div style="background:var(--ink-50);border-radius:var(--r-md);padding:.85rem;">
+                <p style="margin:0 0 .3rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);">🏠 Deliver To</p>
+                <p style="margin:0;font-weight:500;font-size:.88rem;">{{ order.delivery_address[:60] }}{% if order.delivery_address|length > 60 %}…{% endif %}</p>
+            </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;">
+            <p class="meta" style="margin:0;">
+                Order total: <strong>₹{{ '%.2f' % order.total_amount }}</strong> &bull;
+                {{ order.items|length }} item{{ 's' if order.items|length != 1 else '' }}
+            </p>
+            <form action="{{ url_for('delivery.accept_order', order_id=order.id) }}" method="POST" style="margin:0;">
+                <button type="submit" class="btn btn-primary" id="acceptDelivery-{{ order.id }}">
+                    🛵 Accept Delivery
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="panel empty-state fade-up-2">
+    <div class="empty-icon">🛵</div>
+    <h3>No orders available right now</h3>
+    <p>When restaurants mark orders as ready for pickup, they'll appear here. Stay online!</p>
+    <button onclick="window.location.reload()" class="btn btn-outline" id="checkAgainBtn">Check Again</button>
+</div>
+{% endif %}
 {% endblock %}

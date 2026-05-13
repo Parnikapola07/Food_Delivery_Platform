@@ -1,156 +1,122 @@
 {% extends 'base_user.html' %}
 {% block title %}Track Order #{{ order.id }} | ZestyEat{% endblock %}
-{% block extra_head %}
-<style>
-    .tracking-card {
-        background: var(--light-gray);
-        border-radius: var(--radius-xl);
-        padding: 40px;
-        box-shadow: var(--shadow-lg);
-        max-width: 800px;
-        margin: 0 auto;
-    }
-    .timeline {
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        margin: 40px 0;
-        padding-left: 24px;
-    }
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 31px;
-        top: 0;
-        bottom: 0;
-        width: 3px;
-        background: var(--light-gray);
-        z-index: 1;
-    }
-    .timeline-step {
-        display: flex;
-        position: relative;
-        margin-bottom: 32px;
-        opacity: 0.4;
-    }
-    .timeline-step:last-child {
-        margin-bottom: 0;
-    }
-    .timeline-step.active {
-        opacity: 1;
-    }
-    .step-icon {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: var(--light-gray);
-        border: 3px solid var(--white);
-        box-shadow: 0 0 0 2px var(--slate);
-        position: absolute;
-        left: 0;
-        top: 4px;
-        z-index: 2;
-    }
-    .timeline-step.active .step-icon {
-        background: var(--primary);
-        box-shadow: 0 0 0 2px var(--primary);
-    }
-    .step-content {
-        margin-left: 40px;
-    }
-    .step-title {
-        font-weight: 700;
-        font-size: 16px;
-        margin-bottom: 4px;
-    }
-    .step-desc {
-        color: var(--gray);
-        font-size: 14px;
-    }
-    
-    .map-placeholder {
-        height: 300px;
-        background: #e2e8f0;
-        border-radius: var(--radius-lg);
-        margin-bottom: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--slate);
-        font-weight: 500;
-        overflow: hidden;
-        position: relative;
-    }
-    
-    /* Animation for active step */
-    .timeline-step.active.current .step-icon {
-        box-shadow: 0 0 0 4px var(--primary-light);
-        animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
-    }
-</style>
-{% endblock %}
 
 {% block content %}
-<div class="container animate-fade-up">
-    <div class="tracking-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-            <div>
-                <h1 style="font-size: 24px;">Order #{{ order.id }}</h1>
-                <p style="color:var(--gray);">{{ order.restaurant.username }}</p>
-            </div>
-            <div class="badge-status status-{{ order.status|lower|replace(' ', '-') }}" style="font-size:14px; padding: 8px 16px;">
+<div class="tracking-shell fade-up">
+    <div style="text-align:center;margin-bottom:1.75rem;">
+        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-400);margin-bottom:.4rem;">Live Order Tracking</div>
+        <h1 class="section-title">Order #{{ order.id }}</h1>
+        <p class="meta">From <strong style="color:var(--ink-700);">{{ order.restaurant.username }}</strong> &bull;
+            {{ order.created_at.strftime('%b %d, %Y at %I:%M %p') }}</p>
+    </div>
+
+    {% if order.status == 'Rejected' %}
+    <!-- REJECTED STATE -->
+    <div class="panel" style="padding:2.5rem;text-align:center;border:2px solid var(--color-danger-bg);">
+        <div style="font-size:3.5rem;margin-bottom:.75rem;">❌</div>
+        <h2 style="color:var(--color-danger-dark);font-size:1.5rem;margin:0 0 .6rem;">Order Rejected</h2>
+        <p style="color:var(--ink-500);margin:0 auto;max-width:400px;line-height:1.65;">
+            We're sorry, the restaurant was unable to accept your order at this time.
+            The full amount of <strong>₹{{ '%.2f' % order.total_amount }}</strong> will be refunded.
+        </p>
+        <a href="{{ url_for('user.home') }}" class="btn btn-primary" style="margin-top:1.5rem;" id="orderAgainBtn">Order Again</a>
+    </div>
+
+    {% else %}
+    <!-- TRACKING TIMELINE -->
+    {% set stages = ['Pending', 'Accepted', 'Preparing', 'Out for Delivery', 'Delivered'] %}
+    {% set stage_icons = ['🕐', '✅', '👨‍🍳', '🛵', '🎉'] %}
+    {% set stage_descs = ['Sent to restaurant', 'Restaurant accepted', 'Being prepared', 'On the way', 'Delivered!'] %}
+
+    {% set current_idx = 0 %}
+    {% if order.status == 'Pending' %}{% set current_idx = 0 %}
+    {% elif order.status == 'Accepted' %}{% set current_idx = 1 %}
+    {% elif order.status == 'Preparing' or order.status == 'Ready' %}{% set current_idx = 2 %}
+    {% elif order.status == 'Out for Delivery' %}{% set current_idx = 3 %}
+    {% elif order.status == 'Delivered' %}{% set current_idx = 4 %}
+    {% endif %}
+
+    {% set progress_pct = (current_idx / 4 * 84 + 6) | int %}
+
+    <div class="panel timeline fade-up-1">
+        <div style="text-align:center;margin-bottom:1.75rem;">
+            <span class="status-pill {% if order.status == 'Delivered' %}status-success{% elif order.status in ['Pending'] %}status-pending{% else %}status-info{% endif %}"
+                style="font-size:.88rem;padding:.4rem 1rem;">
                 {{ order.status }}
-            </div>
+            </span>
         </div>
-
-        <div class="map-placeholder">
-            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-            <div style="position:absolute; inset:0; background:url('https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800') center/cover; opacity: 0.3;"></div>
-            <span style="position:relative; z-index:2; background:var(--light-gray); padding:8px 16px; border-radius:20px; box-shadow:var(--shadow-sm);">Live Map Tracking (Simulated)</span>
-        </div>
-
-        <h3 style="font-size: 18px;">Order Status</h3>
-
-        {% set steps = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered'] %}
-        {% set current_idx = steps.index(order.status) if order.status in steps else 0 %}
-
-        <div class="timeline">
-            {% for step in steps %}
-            <div class="timeline-step {% if loop.index0 <= current_idx %}active{% endif %} {% if loop.index0 == current_idx %}current{% endif %}">
-                <div class="step-icon"></div>
-                <div class="step-content">
-                    <div class="step-title">{{ step }}</div>
-                    <div class="step-desc">
-                        {% if step == 'Pending' %}Order placed and waiting for restaurant confirmation.
-                        {% elif step == 'Accepted' %}Restaurant confirmed your order.
-                        {% elif step == 'Preparing' %}Your food is being prepared.
-                        {% elif step == 'Ready' %}Food is ready for pickup.
-                        {% elif step == 'Out for Delivery' %}Rider is on the way to your location!
-                        {% elif step == 'Delivered' %}Enjoy your meal!
-                        {% endif %}
-                    </div>
-                    {% if step == 'Out for Delivery' and loop.index0 <= current_idx and order.delivery_partner %}
-                    <div style="margin-top: 12px; display:inline-flex; align-items:center; gap:12px; padding:12px 16px; background:var(--light-gray); border-radius:var(--radius-lg);">
-                        <div class="avatar" style="width:32px; height:32px; font-size:14px;">{{ order.delivery_partner.username[0]|upper }}</div>
-                        <div>
-                            <div style="font-size:14px; font-weight:600;">{{ order.delivery_partner.username }}</div>
-                            <div style="font-size:12px; color:var(--gray);">Delivery Partner</div>
-                        </div>
-                    </div>
-                    {% endif %}
+        <div class="timeline-track" style="--progress:{{ progress_pct }}">
+            {% for i in range(stages|length) %}
+            <div class="step {% if i < current_idx %}done{% elif i == current_idx %}active{% endif %}">
+                <div class="dot">
+                    {% if i < current_idx %}✓{% else %}{{ stage_icons[i] }}{% endif %}
                 </div>
+                <span class="step-label">{{ stages[i] }}</span>
             </div>
             {% endfor %}
         </div>
+        <p class="meta" style="text-align:center;margin-top:1.5rem;font-size:.82rem;">
+            {% if order.status == 'Delivered' %}
+            🎉 Your order has been delivered. Enjoy your meal!
+            {% elif order.status == 'Out for Delivery' %}
+            🛵 Your order is on its way! Get ready to receive it.
+            {% elif order.status == 'Preparing' or order.status == 'Ready' %}
+            👨‍🍳 Your food is being freshly prepared with care.
+            {% elif order.status == 'Accepted' %}
+            ✅ Restaurant has accepted your order and will start preparing soon.
+            {% else %}
+            🕐 Waiting for the restaurant to confirm your order.
+            {% endif %}
+        </p>
+    </div>
 
-        <div style="margin-top: 40px; text-align: center;">
-            <a href="{{ url_for('user.home') }}" class="btn btn-secondary">Back to Home</a>
+    <!-- Order Details -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-top:1.1rem;" class="fade-up-2">
+        <div class="panel" style="padding:1.25rem;">
+            <h3 style="margin:0 0 1rem;font-size:.97rem;">Order Items</h3>
+            {% for item in order.items %}
+            <div class="flex-between" style="margin-bottom:.6rem;font-size:.88rem;">
+                <span>{{ item.quantity }}× {{ item.menu_item.name }}</span>
+                <span style="font-weight:600;">₹{{ '%.0f' % (item.price_at_time * item.quantity) }}</span>
+            </div>
+            {% endfor %}
+            <div class="divider"></div>
+            <div class="flex-between" style="font-weight:800;font-size:1rem;">
+                <span>Total Paid</span>
+                <span style="color:var(--brand-red);">₹{{ '%.2f' % order.total_amount }}</span>
+            </div>
+        </div>
+
+        <div class="panel" style="padding:1.25rem;">
+            <h3 style="margin:0 0 1rem;font-size:.97rem;">Delivery Info</h3>
+            <div style="font-size:.875rem;display:flex;flex-direction:column;gap:.75rem;">
+                <div>
+                    <div style="font-weight:600;color:var(--ink-500);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;">Address</div>
+                    <div>{{ order.delivery_address }}</div>
+                </div>
+                <div>
+                    <div style="font-weight:600;color:var(--ink-500);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;">Phone</div>
+                    <div>{{ order.contact_phone }}</div>
+                </div>
+                {% if order.delivery_partner %}
+                <div>
+                    <div style="font-weight:600;color:var(--ink-500);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;">Delivery Partner</div>
+                    <div style="display:flex;align-items:center;gap:.5rem;">
+                        <span style="width:28px;height:28px;border-radius:50%;background:var(--brand-gradient);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;">{{ order.delivery_partner.username[0]|upper }}</span>
+                        <span>{{ order.delivery_partner.username }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
+
+    <div style="text-align:center;margin-top:1.5rem;" class="fade-up-3">
+        <button onclick="window.location.reload()" class="btn btn-outline" id="refreshStatusBtn">
+            🔄 Refresh Status
+        </button>
+        <a href="{{ url_for('user.order_history') }}" class="btn btn-secondary" style="margin-left:.75rem;" id="viewAllOrdersBtn">All Orders</a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

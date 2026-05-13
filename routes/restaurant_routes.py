@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from models import User, MenuItem, Order
+from models import MenuItem, Order
 from extensions import db
-from sqlalchemy import func
 
 restaurant_bp = Blueprint('restaurant', __name__)
 

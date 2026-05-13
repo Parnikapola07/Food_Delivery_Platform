@@ -1,68 +1,62 @@
 {% extends 'base_restaurant.html' %}
-{% block title %}Manage Menu | ZestyEat Partner{% endblock %}
-{% block page_title %}Menu Management{% endblock %}
+{% block title %}Manage Menu | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="animate-fade-up">
-    <div class="flex justify-between align-center mb-6">
-        <div>
-            <h2 style="font-size: 24px;">Your Menu</h2>
-            <p style="color:var(--gray);">Add, edit or disable your offerings.</p>
-        </div>
-        <a href="{{ url_for('restaurant.add_menu') }}" class="btn btn-primary">+ Add New Item</a>
+<div class="section-header fade-up">
+    <div>
+        <h1 class="section-title">Menu Management</h1>
+        <p class="section-subtitle">{{ menu_items|length }} item{{ 's' if menu_items|length != 1 else '' }} in your menu</p>
     </div>
-
-    <div class="card">
-        <div class="card-body" style="padding:0;">
-            {% if menu_items %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in menu_items %}
-                    <tr>
-                        <td style="display:flex; align-items:center; gap:12px;">
-                            <img src="{{ item.image_url if item.image_url and item.image_url != 'default_food.jpg' else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=100' }}" alt="{{ item.name }}" style="width:48px;height:48px;object-fit:cover;border-radius:var(--radius-sm);">
-                            <div>
-                                <div style="font-weight: 600;">{{ item.name }}</div>
-                                <div style="font-size: 13px; color: var(--gray); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ item.description }}</div>
-                            </div>
-                        </td>
-                        <td>{{ item.category }}</td>
-                        <td style="font-weight: 600;">${{ "%.2f"|format(item.price) }}</td>
-                        <td>
-                            {% if item.is_active %}
-                            <span class="badge-status status-delivered">Active</span>
-                            {% else %}
-                            <span class="badge-status" style="background:#e2e8f0; color:#475569;">Inactive</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="flex gap-2">
-                                <a href="{{ url_for('restaurant.edit_menu', item_id=item.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size:13px;">Edit</a>
-                                <form action="{{ url_for('restaurant.delete_menu', item_id=item.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this item?');" style="display:inline;">
-                                    <button type="submit" class="btn" style="background:var(--danger); color:white; padding: 6px 12px; font-size:13px;">Delete</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty-state">
-                <p>Your menu is empty. Add some delicious items to get started!</p>
-                <a href="{{ url_for('restaurant.add_menu') }}" class="btn btn-primary mt-4">+ Add Item</a>
-            </div>
-            {% endif %}
-        </div>
-    </div>
+    <a href="{{ url_for('restaurant.add_menu') }}" class="btn btn-primary" id="addItemBtn">+ Add New Item</a>
 </div>
+
+{% if menu_items %}
+<div class="grid fade-up-1">
+    {% for item in menu_items %}
+    <div class="card {% if not item.is_active %}item-inactive{% endif %}" id="menuItem-{{ item.id }}" style="display:flex;flex-direction:column;">
+        <div class="restaurant-image"
+            style="height:170px;background-image:url('{{ item.image_url if item.image_url and item.image_url != 'default_food.jpg' else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600' }}');position:relative;">
+            {% if not item.is_active %}
+            <span class="offer-tag" style="background:rgba(0,0,0,0.7);">Unavailable</span>
+            {% endif %}
+            <span style="position:absolute;top:10px;right:10px;z-index:2;background:var(--ink-900);color:#fff;padding:.25rem .6rem;border-radius:var(--r-full);font-size:.74rem;font-weight:700;">
+                {{ item.category }}
+            </span>
+        </div>
+        <div class="card-content" style="flex:1;display:flex;flex-direction:column;">
+            <div class="card-title-row">
+                <h3 style="font-size:1rem;">{{ item.name }}</h3>
+                <span style="font-weight:800;color:var(--brand-red);flex-shrink:0;">₹{{ '%.0f' % item.price }}</span>
+            </div>
+            {% if item.description %}
+            <p class="meta" style="flex:1;margin:.3rem 0 .9rem;line-height:1.5;">{{ item.description[:80] }}{% if item.description|length > 80 %}…{% endif %}</p>
+            {% endif %}
+
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:auto;">
+                <a href="{{ url_for('restaurant.edit_menu', item_id=item.id) }}" class="btn btn-outline btn-sm" id="editItem-{{ item.id }}">
+                    ✏️ Edit
+                </a>
+                <form action="{{ url_for('restaurant.toggle_menu_status', item_id=item.id) }}" method="POST" style="margin:0;">
+                    <button type="submit" class="btn btn-sm {% if item.is_active %}btn-outline{% else %}btn-primary{% endif %}" id="toggleItem-{{ item.id }}">
+                        {% if item.is_active %}📴 Disable{% else %}✅ Enable{% endif %}
+                    </button>
+                </form>
+                <form action="{{ url_for('restaurant.delete_menu', item_id=item.id) }}" method="POST" style="margin:0;"
+                    onsubmit="return confirm('Delete \'{{ item.name }}\'? This cannot be undone.');">
+                    <button type="submit" class="btn btn-sm btn-danger" id="deleteItem-{{ item.id }}">🗑 Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="panel empty-state fade-up">
+    <div class="empty-icon">🍽️</div>
+    <h3>Your menu is empty</h3>
+    <p>Add your first item so customers can start ordering from your restaurant.</p>
+    <a href="{{ url_for('restaurant.add_menu') }}" class="btn btn-primary" id="addFirstItemBtn">Add First Item</a>
+</div>
+{% endif %}
 {% endblock %}

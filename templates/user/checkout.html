@@ -1,115 +1,140 @@
 {% extends 'base_user.html' %}
-{% block title %}Checkout | ZestyEat{% endblock %}
-{% block extra_head %}
-<style>
-    .checkout-layout {
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 40px;
-        align-items: start;
-    }
-    .checkout-form-card {
-        background: var(--light-gray);
-        border-radius: var(--radius-xl);
-        padding: 40px;
-        box-shadow: var(--shadow-sm);
-    }
-    .form-section-title {
-        font-size: 20px;
-        margin-bottom: 24px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .summary-card {
-        background: var(--light-gray);
-        border-radius: var(--radius-xl);
-        padding: 32px;
-        box-shadow: var(--shadow-lg);
-        position: sticky;
-        top: 100px;
-    }
-    .mini-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        font-size: 14px;
-    }
-    .mini-item-name { flex: 1; }
-    .mini-item-price { font-weight: 500; }
-    @media (max-width: 900px) {
-        .checkout-layout { grid-template-columns: 1fr; }
-    }
-</style>
-{% endblock %}
+{% block title %}Secure Checkout | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="container animate-fade-up">
-    <h1 style="margin-bottom: 32px; font-size: 32px;">Checkout</h1>
-    
-    <div class="checkout-layout">
-        <div class="checkout-form-card">
-            <h2 class="form-section-title">
-                <span style="background:var(--primary);color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">1</span>
+<div class="section-header fade-up">
+    <h1 class="section-title">🔒 Secure Checkout</h1>
+    <span class="section-subtitle">Review and place your order</span>
+</div>
+
+<div class="checkout-layout fade-up-1">
+    <!-- LEFT: Delivery + Payment -->
+    <div>
+        <!-- Delivery Details -->
+        <div class="panel" style="padding:1.5rem;margin-bottom:1.25rem;">
+            <h3 style="margin:0 0 1.25rem;font-size:1.05rem;display:flex;align-items:center;gap:.55rem;">
+                <span style="width:32px;height:32px;border-radius:50%;background:var(--brand-gradient);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;flex-shrink:0;">1</span>
                 Delivery Details
-            </h2>
-            
-            <form action="{{ url_for('user.checkout') }}" method="POST" id="checkoutForm">
+            </h3>
+            <form method="POST" id="checkoutForm">
                 <div class="form-group">
-                    <label class="form-label">Delivery Address</label>
-                    <textarea name="address" rows="3" class="form-control" required placeholder="Enter full delivery address...">{{ current_user.address }}</textarea>
+                    <label class="form-label" for="address">Delivery Address</label>
+                    <textarea name="address" id="address" class="form-control" rows="3" required
+                        placeholder="Enter your full delivery address (house no, street, city, pincode)">{{ current_user.address or '' }}</textarea>
                 </div>
-                
                 <div class="form-group">
-                    <label class="form-label">Contact Phone</label>
-                    <input type="text" name="phone" class="form-control" required placeholder="+1 (555) 000-0000" value="{{ current_user.phone }}">
+                    <label class="form-label" for="phone">Contact Phone</label>
+                    <input type="tel" name="phone" id="phone" class="form-control" required
+                        placeholder="10-digit mobile number" value="{{ current_user.phone or '' }}" autocomplete="tel">
                 </div>
-                
-                <h2 class="form-section-title" style="margin-top: 40px;">
-                    <span style="background:var(--primary);color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">2</span>
-                    Payment
-                </h2>
-                
-                <div style="background:var(--light-gray); padding: 24px; border-radius: var(--radius-lg); text-align:center; color: var(--gray); margin-bottom: 24px;">
-                    <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:8px;"><rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M3 10h18"></path></svg>
-                    <p>Cash on Delivery (simulated)</p>
-                </div>
+
+                <!-- Payment -->
+                <h3 style="margin:1.5rem 0 1rem;font-size:1.05rem;display:flex;align-items:center;gap:.55rem;">
+                    <span style="width:32px;height:32px;border-radius:50%;background:var(--brand-gradient);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;flex-shrink:0;">2</span>
+                    Payment Method
+                </h3>
+
+                <label class="payment-option selected" for="pay-cod">
+                    <input type="radio" name="payment" id="pay-cod" value="cod" checked>
+                    <div class="payment-icon">💵</div>
+                    <div>
+                        <div class="payment-label">Cash on Delivery</div>
+                        <div class="payment-sub">Pay when your order arrives</div>
+                    </div>
+                </label>
+
+                <label class="payment-option" for="pay-upi">
+                    <input type="radio" name="payment" id="pay-upi" value="upi">
+                    <div class="payment-icon">📱</div>
+                    <div>
+                        <div class="payment-label">UPI (Mock)</div>
+                        <div class="payment-sub">Google Pay, PhonePe, Paytm</div>
+                    </div>
+                </label>
+
+                <label class="payment-option" for="pay-card">
+                    <input type="radio" name="payment" id="pay-card" value="card">
+                    <div class="payment-icon">💳</div>
+                    <div>
+                        <div class="payment-label">Card Payment (Mock)</div>
+                        <div class="payment-sub">Credit or Debit card</div>
+                    </div>
+                </label>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:1.25rem;font-size:1rem;justify-content:center;" id="placeOrderBtn">
+                    🛵 Place Order Now
+                </button>
+
+                <p style="text-align:center;font-size:.78rem;color:var(--ink-400);margin:.75rem 0 0;">
+                    By placing your order, you agree to our Terms & Privacy Policy.
+                </p>
             </form>
         </div>
-        
-        <div class="summary-card">
-            <h2 style="font-size: 20px; margin-bottom: 24px;">Your Order</h2>
-            
-            <div style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+    </div>
+
+    <!-- RIGHT: Order Summary -->
+    <div class="sidebar-sticky">
+        <div class="panel" style="padding:1.35rem;overflow:hidden;">
+            <div style="background:var(--ink-50);border-radius:var(--r-sm);padding:.75rem 1rem;margin-bottom:1rem;">
+                <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--ink-400);">Ordering From</div>
+                <div style="font-weight:700;margin-top:.2rem;">{{ cart_items[0].menu_item.restaurant.username }}</div>
+            </div>
+
+            <h3 style="margin:0 0 .9rem;font-size:.97rem;">Order Summary</h3>
+
+            <div style="max-height:240px;overflow-y:auto;margin-bottom:1rem;">
                 {% for item in cart_items %}
-                <div class="mini-item">
-                    <div class="mini-item-name">{{ item.quantity }}x {{ item.menu_item.name }}</div>
-                    <div class="mini-item-price">${{ "%.2f"|format(item.menu_item.price * item.quantity) }}</div>
+                <div class="flex-between" style="padding:.55rem 0;border-bottom:1px solid var(--ink-50);font-size:.875rem;">
+                    <div>
+                        <div style="font-weight:600;">{{ item.quantity }}× {{ item.menu_item.name }}</div>
+                        <div class="meta">₹{{ '%.0f' % item.menu_item.price }} each</div>
+                    </div>
+                    <span style="font-weight:700;">₹{{ '%.0f' % (item.menu_item.price * item.quantity) }}</span>
                 </div>
                 {% endfor %}
             </div>
-            
-            <div class="mini-item" style="color:var(--slate);">
-                <span>Subtotal</span>
-                <span>${{ "%.2f"|format(subtotal) }}</span>
+
+            <div class="bill-row">
+                <span class="label">Subtotal</span>
+                <span>₹{{ '%.2f' % subtotal }}</span>
             </div>
-            <div class="mini-item" style="color:var(--slate);">
-                <span>Delivery</span>
-                <span>${{ "%.2f"|format(delivery_fee) }}</span>
+            <div class="bill-row">
+                <span class="label">Delivery Fee</span>
+                <span>₹{{ '%.2f' % delivery_fee }}</span>
             </div>
-            <div class="mini-item" style="color:var(--slate);">
-                <span>Platform</span>
-                <span>${{ "%.2f"|format(platform_fee) }}</span>
+            <div class="bill-row">
+                <span class="label">Platform Fee</span>
+                <span>₹{{ '%.2f' % platform_fee }}</span>
             </div>
-            <div class="mini-item" style="font-size: 20px; font-weight: 700; margin-top: 16px; padding-top: 16px; border-top: 2px dashed #e2e8f0; color:var(--white);">
-                <span>Total</span>
-                <span>${{ "%.2f"|format(total) }}</span>
+
+            <div class="bill-total" style="margin-top:.75rem;">
+                <span>Grand Total</span>
+                <span class="amount">₹{{ '%.2f' % total }}</span>
             </div>
-            
-            <button type="submit" form="checkoutForm" class="btn btn-primary w-full mt-6" style="padding: 16px; font-size: 16px;">
-                Place Order
-            </button>
+
+            <div style="margin-top:1rem;display:flex;align-items:center;gap:.55rem;font-size:.8rem;color:var(--ink-400);padding:.75rem;background:rgba(34,197,94,0.06);border-radius:var(--r-sm);border:1px solid rgba(34,197,94,0.15);">
+                <span>✅</span> Your order is protected by ZestyEat's delivery guarantee.
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Payment option highlight
+document.querySelectorAll('.payment-option input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+        this.closest('.payment-option').classList.add('selected');
+    });
+});
+
+// Disable button on submit
+document.getElementById('checkoutForm').addEventListener('submit', function() {
+    const btn = document.getElementById('placeOrderBtn');
+    btn.textContent = 'Placing Order…';
+    btn.disabled = true;
+});
+</script>
 {% endblock %}

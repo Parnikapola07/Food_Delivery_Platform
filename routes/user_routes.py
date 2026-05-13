@@ -75,22 +75,24 @@ def api_search():
 @user_bp.route('/menu/<int:restaurant_id>')
 def restaurant_detail(restaurant_id):
     restaurant = User.query.get_or_404(restaurant_id)
-    menu_items = MenuItem.query.filter_by(restaurant_id=restaurant_id, is_active=True).all()
+    menu_items = MenuItem.query.filter_by(restaurant_id=restaurant_id).all()
     
     # Check if there are items from another restaurant in cart
     cart_restaurant_id = None
     cart_quantities = {}
+    cart_item_ids = {}
     if current_user.is_authenticated:
         cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
         if cart_items:
             cart_restaurant_id = cart_items[0].menu_item.restaurant_id
             for item in cart_items:
                 cart_quantities[item.menu_item_id] = item.quantity
+                cart_item_ids[item.menu_item_id] = item.id
             
     # Fetch reviews for this restaurant
     reviews = Review.query.filter_by(restaurant_id=restaurant_id).order_by(Review.created_at.desc()).all()
         
-    return render_template('user/restaurant_detail.html', restaurant=restaurant, menu_items=menu_items, cart_restaurant_id=cart_restaurant_id, cart_quantities=cart_quantities, reviews=reviews)
+    return render_template('user/restaurant_detail.html', restaurant=restaurant, menu_items=menu_items, cart_restaurant_id=cart_restaurant_id, cart_quantities=cart_quantities, cart_item_ids=cart_item_ids, reviews=reviews)
 
 @user_bp.route('/add_to_cart/<int:menu_item_id>', methods=['POST'])
 @login_required
@@ -113,6 +115,11 @@ def add_to_cart(menu_item_id):
         db.session.add(new_cart_item)
         
     db.session.commit()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        cart_count = sum(item.quantity for item in CartItem.query.filter_by(user_id=current_user.id).all())
+        return {'success': True, 'message': 'Item added to cart.', 'cart_count': cart_count}
+        
     flash('Item added to cart.', 'success')
     return redirect(url_for('user.restaurant_detail', restaurant_id=menu_item.restaurant_id))
 
@@ -133,7 +140,6 @@ def update_cart(cart_item_id):
     if cart_item.user_id != current_user.id:
         return redirect(url_for('user.cart'))
         
-    menu_item_id = cart_item.menu_item_id
     action = request.form.get('action')
     if action == 'increase':
         cart_item.quantity += 1
@@ -141,8 +147,29 @@ def update_cart(cart_item_id):
         cart_item.quantity -= 1
         if cart_item.quantity <= 0:
             db.session.delete(cart_item)
+    elif action == 'remove':
+        db.session.delete(cart_item)
+        cart_item.quantity = 0
             
     db.session.commit()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Return updated totals and quantity
+        all_items = CartItem.query.filter_by(user_id=current_user.id).all()
+        subtotal = sum(item.menu_item.price * item.quantity for item in all_items)
+        delivery_fee = 5.0 if subtotal > 0 else 0
+        platform_fee = 2.0 if subtotal > 0 else 0
+        total = subtotal + delivery_fee + platform_fee
+        new_quantity = cart_item.quantity if cart_item.quantity > 0 else 0
+        return {
+            'success': True, 
+            'item_total': cart_item.quantity * cart_item.menu_item.price if cart_item.quantity > 0 else 0,
+            'quantity': new_quantity,
+            'subtotal': subtotal,
+            'delivery_fee': delivery_fee,
+            'platform_fee': platform_fee,
+            'total': total
+        }
     
     return redirect(request.referrer or url_for('user.cart'))
 
@@ -162,6 +189,8 @@ def checkout():
     if request.method == 'POST':
         address = request.form.get('address')
         phone = request.form.get('phone')
+        restaurant_note = request.form.get('restaurant_instructions')
+        delivery_note = request.form.get('delivery_instructions')
         
         restaurant_id = cart_items[0].menu_item.restaurant_id
         
@@ -173,6 +202,8 @@ def checkout():
             platform_fee=platform_fee,
             delivery_address=address,
             contact_phone=phone,
+            restaurant_instructions=restaurant_note,
+            delivery_instructions=delivery_note,
             status='Pending'
         )
         db.session.add(new_order)

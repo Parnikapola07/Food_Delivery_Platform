@@ -1,46 +1,89 @@
 {% extends 'base_restaurant.html' %}
-{% block title %}Add Menu Item | ZestyEat Partner{% endblock %}
-{% block page_title %}Add New Menu Item{% endblock %}
+{% block title %}Add Menu Item | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="animate-fade-up" style="max-width: 600px;">
-    <div class="card">
-        <div class="card-body">
-            <form action="{{ url_for('restaurant.add_menu') }}" method="POST">
-                <div class="form-group">
-                    <label class="form-label" for="name">Item Name</label>
-                    <input type="text" id="name" name="name" class="form-control" required placeholder="e.g. Classic Cheeseburger">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="description">Description</label>
-                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Brief description of the item..."></textarea>
-                </div>
-                
-                <div class="grid grid-cols-2" style="gap: 20px;">
-                    <div class="form-group">
-                        <label class="form-label" for="price">Price ($)</label>
-                        <input type="number" step="0.01" id="price" name="price" class="form-control" required placeholder="0.00">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="category">Category</label>
-                        <input type="text" id="category" name="category" class="form-control" required placeholder="e.g. Mains, Sides, Beverages">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="image_url">Image URL</label>
-                    <input type="url" id="image_url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg">
-                    <small style="color:var(--gray);">Leave blank for default image.</small>
-                </div>
-                
-                <div class="flex gap-4 mt-8">
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Add Item</button>
-                    <a href="{{ url_for('restaurant.manage_menu') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
+<div style="max-width:700px;margin:0 auto;" class="fade-up">
+    <div class="section-header" style="margin-bottom:1.5rem;">
+        <div>
+            <h1 class="section-title">Add New Item</h1>
+            <p class="section-subtitle">Add a dish to your restaurant menu</p>
         </div>
+        <a href="{{ url_for('restaurant.manage_menu') }}" class="btn btn-outline btn-sm" id="backBtn">← Back to Menu</a>
+    </div>
+
+    <div class="panel" style="padding:2rem;">
+        <form method="POST" id="addMenuForm">
+            <div class="form-group">
+                <label class="form-label" for="name">Item Name <span style="color:var(--brand-red);">*</span></label>
+                <input type="text" name="name" id="name" class="form-control" required placeholder="e.g., Margherita Pizza, Chicken Burger…" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea name="description" id="description" class="form-control" rows="3"
+                    placeholder="Describe the dish — ingredients, taste, portion size…"></textarea>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="price">Price (₹) <span style="color:var(--brand-red);">*</span></label>
+                    <input type="number" step="0.01" min="0" name="price" id="price" class="form-control" required placeholder="e.g., 299">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="category">Category <span style="color:var(--brand-red);">*</span></label>
+                    <select name="category" id="category" class="form-control" required>
+                        <option value="">Select Category…</option>
+                        <option value="Starters">🥗 Starters</option>
+                        <option value="Main Course">🍛 Main Course</option>
+                        <option value="Breads">🫓 Breads</option>
+                        <option value="Rice & Biryani">🍚 Rice & Biryani</option>
+                        <option value="Soups">🍲 Soups</option>
+                        <option value="Desserts">🍰 Desserts</option>
+                        <option value="Beverages">☕ Beverages</option>
+                        <option value="Fast Food">🍔 Fast Food</option>
+                        <option value="Pizza">🍕 Pizza</option>
+                        <option value="Rolls & Wraps">🌮 Rolls & Wraps</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="image_url">Image URL <span class="form-hint" style="display:inline;">(optional)</span></label>
+                <input type="url" name="image_url" id="image_url" class="form-control"
+                    placeholder="https://example.com/food-image.jpg">
+                <p class="form-hint">Paste a public image link. Leave blank to use a default image.</p>
+            </div>
+
+            <!-- Preview -->
+            <div id="imagePreview" style="display:none;margin-bottom:1rem;">
+                <p class="form-label">Image Preview</p>
+                <img id="previewImg" src="" alt="Preview" style="max-height:180px;border-radius:var(--r-md);object-fit:cover;">
+            </div>
+
+            <div style="display:flex;gap:.75rem;margin-top:1.25rem;">
+                <a href="{{ url_for('restaurant.manage_menu') }}" class="btn btn-outline" id="cancelBtn">Cancel</a>
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;" id="submitBtn">
+                    ✅ Add to Menu
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const imgInput = document.getElementById('image_url');
+const preview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+imgInput.addEventListener('blur', function() {
+    if (this.value) {
+        previewImg.src = this.value;
+        preview.style.display = 'block';
+        previewImg.onerror = () => { preview.style.display = 'none'; };
+    } else {
+        preview.style.display = 'none';
+    }
+});
+</script>
 {% endblock %}

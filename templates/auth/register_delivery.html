@@ -1,52 +1,46 @@
-{% extends 'base_user.html' %}
-{% block title %}Become a Rider | ZestyEat{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Join as Delivery Partner | ZestyEat{% endblock %}
 
 {% block content %}
-<div class="container animate-fade-up">
-    <div class="auth-card" style="max-width:540px;">
-        <div class="auth-header">
-            <h2>Join the Fleet</h2>
-            <p>Deliver food and earn on your schedule</p>
+<div class="auth-shell">
+    <div class="auth-card fade-up" style="max-width:520px;width:min(520px,100%);">
+        <div class="brand-wrap">
+            <div class="logo-big">🛵</div>
+            <h2>Join as Delivery Partner</h2>
+            <p class="subtitle">Earn on your own schedule with flexible hours</p>
         </div>
 
-        <form method="POST">
+        <form method="POST" id="registerDeliveryForm">
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="username">Full Name</label>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="Your name" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="phone">Phone Number</label>
+                    <input type="tel" name="phone" id="phone" class="form-control" placeholder="+91 99999 00000" required autocomplete="tel">
+                </div>
+            </div>
             <div class="form-group">
-                <label class="form-label">Full Name</label>
-                <input type="text" name="username" class="form-control" required>
+                <label class="form-label" for="email">Email Address</label>
+                <input type="email" name="email" id="email" class="form-control" placeholder="you@example.com" required autocomplete="email">
             </div>
-            
-            <div class="grid grid-cols-2" style="gap:16px;">
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required>
-                </div>
+            <div class="form-group">
+                <label class="form-label" for="address">Home Area / Zone</label>
+                <textarea name="address" id="address" class="form-control" rows="2" placeholder="Area you'd like to deliver in"></textarea>
             </div>
-            
-            <div class="grid grid-cols-2" style="gap:16px;">
-                <div class="form-group">
-                    <label class="form-label">Phone Number</label>
-                    <input type="text" name="phone" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Vehicle Type</label>
-                    <select name="address" class="form-control" required>
-                        <option value="Bicycle">Bicycle</option>
-                        <option value="Motorcycle">Motorcycle</option>
-                        <option value="Car">Car</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" name="password" id="password" class="form-control" placeholder="Create a strong password" required autocomplete="new-password" minlength="6">
             </div>
-            
-            <button type="submit" class="btn btn-primary w-full mt-4" style="padding:14px; font-size:16px;">Register</button>
+            <button type="submit" class="btn btn-primary" style="width:100%;font-size:.95rem;" id="registerSubmitBtn">
+                Start Delivering
+            </button>
         </form>
 
-        <div style="text-align:center; margin-top: 24px;">
-            <p style="color:var(--gray); display:inline;">Already a rider?</p>
-            <a href="{{ url_for('auth.login', role='delivery') }}" style="font-weight:600;">Log In</a>
+        <div class="auth-footer">
+            Already a partner? <a href="{{ url_for('auth.login', role='delivery') }}">Log in</a> &nbsp;|&nbsp;
+            <a href="{{ url_for('auth.role_select') }}" style="color:var(--ink-400);">Back</a>
         </div>
     </div>
 </div>
