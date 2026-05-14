@@ -65,3 +65,11 @@ def update_status(order_id):
             db.session.commit()
             flash(f'Order marked as {status}.', 'success')
     return redirect(url_for('delivery.assigned_orders'))
+
+@delivery_bp.route('/api/orders/latest')
+@login_required
+def api_latest_orders():
+    # Fetch the highest order ID among available 'Ready' orders
+    latest_order = Order.query.filter_by(status='Ready', delivery_partner_id=None).order_by(Order.id.desc()).first()
+    latest_id = latest_order.id if latest_order else 0
+    return {'latest_order_id': latest_id}

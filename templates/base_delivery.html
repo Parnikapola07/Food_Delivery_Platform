@@ -88,6 +88,63 @@
             }, 3000);
         };
     </script>
+    <script>
+        // Real-Time Order Updates (AJAX Polling)
+        let currentLatestOrderId = null;
+        
+        function playBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                setTimeout(() => osc.stop(), 200);
+            } catch(e) { console.log(e); }
+        }
+
+        setInterval(async () => {
+            try {
+                const res = await fetch("{{ url_for('delivery.api_latest_orders') }}");
+                if (!res.ok) return;
+                const data = await res.json();
+                
+                if (currentLatestOrderId === null) {
+                    currentLatestOrderId = data.latest_order_id;
+                } else if (data.latest_order_id > currentLatestOrderId) {
+                    currentLatestOrderId = data.latest_order_id;
+                    playBeep();
+                    
+                    const overlay = document.createElement('div');
+                    overlay.style.position = 'fixed';
+                    overlay.style.top = '20px';
+                    overlay.style.left = '50%';
+                    overlay.style.transform = 'translateX(-50%)';
+                    overlay.style.background = 'var(--color-success)';
+                    overlay.style.color = 'white';
+                    overlay.style.padding = '15px 30px';
+                    overlay.style.borderRadius = 'var(--r-md)';
+                    overlay.style.boxShadow = '0 10px 25px rgba(34,197,94,0.4)';
+                    overlay.style.zIndex = '9999';
+                    overlay.style.fontWeight = '700';
+                    overlay.style.fontSize = '1.1rem';
+                    overlay.className = 'fade-up';
+                    overlay.innerHTML = '🛵 New Delivery Available! Auto-refreshing...';
+                    document.body.appendChild(overlay);
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
+        }, 5000);
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -51,8 +51,11 @@
                 <a href="{{ url_for('restaurant.add_menu') }}" class="nav-item {% if request.endpoint == 'restaurant.add_menu' %}active{% endif %}" id="navAddItem">
                     <span>➕</span> Add Menu Item
                 </a>
-                <a href="{{ url_for('restaurant.orders') }}" class="nav-item {% if request.endpoint == 'restaurant.orders' %}active{% endif %}" id="navOrders">
+                <a href="{{ url_for('restaurant.orders') }}" class="nav-item {% if request.endpoint == 'restaurant.orders' %}active{% endif %}" id="navOrders" style="position:relative;">
                     <span>📦</span> Incoming Orders
+                    {% if pending_orders_count > 0 %}
+                    <span style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);width:8px;height:8px;background:var(--brand-red);border-radius:50%;box-shadow:0 0 0 2px #fff;"></span>
+                    {% endif %}
                 </a>
                 <div style="margin-top:1.5rem;padding:.75rem .8rem;background:var(--brand-gradient-soft);border-radius:var(--r-sm);border:1px solid rgba(255,61,61,0.12);">
                     <div style="font-size:.78rem;font-weight:700;color:var(--brand-red-dark);margin-bottom:.25rem;">Logged in as</div>
@@ -92,6 +95,63 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         };
+    </script>
+    <script>
+        // Real-Time Order Updates (AJAX Polling)
+        let currentLatestOrderId = null;
+        
+        function playBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                setTimeout(() => osc.stop(), 200);
+            } catch(e) { console.log(e); }
+        }
+
+        setInterval(async () => {
+            try {
+                const res = await fetch("{{ url_for('restaurant.api_latest_orders') }}");
+                if (!res.ok) return;
+                const data = await res.json();
+                
+                if (currentLatestOrderId === null) {
+                    currentLatestOrderId = data.latest_order_id;
+                } else if (data.latest_order_id > currentLatestOrderId) {
+                    currentLatestOrderId = data.latest_order_id;
+                    playBeep();
+                    
+                    const overlay = document.createElement('div');
+                    overlay.style.position = 'fixed';
+                    overlay.style.top = '20px';
+                    overlay.style.left = '50%';
+                    overlay.style.transform = 'translateX(-50%)';
+                    overlay.style.background = 'var(--brand-red)';
+                    overlay.style.color = 'white';
+                    overlay.style.padding = '15px 30px';
+                    overlay.style.borderRadius = 'var(--r-md)';
+                    overlay.style.boxShadow = '0 10px 25px rgba(255,61,61,0.4)';
+                    overlay.style.zIndex = '9999';
+                    overlay.style.fontWeight = '700';
+                    overlay.style.fontSize = '1.1rem';
+                    overlay.className = 'fade-up';
+                    overlay.innerHTML = '🔔 New Order! Auto-refreshing...';
+                    document.body.appendChild(overlay);
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
+        }, 5000);
     </script>
     {% block extra_js %}{% endblock %}
 </body>

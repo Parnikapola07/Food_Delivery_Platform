@@ -11,6 +11,13 @@ def check_role():
         flash('Please login as a restaurant.', 'warning')
         return redirect(url_for('auth.login', role='restaurant'))
 
+@restaurant_bp.context_processor
+def inject_pending_orders():
+    if current_user.is_authenticated and current_user.role == 'restaurant':
+        pending_count = Order.query.filter_by(restaurant_id=current_user.id, status='Pending').count()
+        return dict(pending_orders_count=pending_count)
+    return dict(pending_orders_count=0)
+
 @restaurant_bp.route('/dashboard')
 @login_required
 def dashboard():
@@ -34,14 +41,13 @@ def add_menu():
         category = request.form.get('category')
         image_url = request.form.get('image_url') or 'default_food.jpg'
         
-        new_item = MenuItem(
-            name=name,
-            description=description,
-            price=price,
-            category=category,
-            image_url=image_url,
-            restaurant_id=current_user.id
-        )
+        new_item = MenuItem()
+        new_item.name = name
+        new_item.description = description
+        new_item.price = price
+        new_item.category = category
+        new_item.image_url = image_url
+        new_item.restaurant_id = current_user.id
         db.session.add(new_item)
         db.session.commit()
         flash('Menu item added successfully!', 'success')
@@ -117,3 +123,11 @@ def update_order_status(order_id):
             db.session.commit()
             flash(f'Order status updated to {new_status}.', 'success')
     return redirect(url_for('restaurant.orders'))
+
+@restaurant_bp.route('/api/orders/latest')
+@login_required
+def api_latest_orders():
+    # Fetch the highest order ID for this restaurant
+    latest_order = Order.query.filter_by(restaurant_id=current_user.id).order_by(Order.id.desc()).first()
+    latest_id = latest_order.id if latest_order else 0
+    return {'latest_order_id': latest_id}

@@ -69,14 +69,13 @@ def register(role):
             return redirect(url_for('auth.register', role=role))
             
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        new_user = User(
-            username=username, 
-            email=email, 
-            password=hashed_password, 
-            role=role,
-            phone=phone,
-            address=address
-        )
+        new_user = User()
+        new_user.username = username
+        new_user.email = email
+        new_user.password = hashed_password
+        new_user.role = role
+        new_user.phone = phone
+        new_user.address = address
         db.session.add(new_user)
         db.session.commit()
         flash(f'Account created for {username}! You can now log in.', 'success')

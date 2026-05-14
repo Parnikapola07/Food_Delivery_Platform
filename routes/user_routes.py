@@ -111,7 +111,10 @@ def add_to_cart(menu_item_id):
     if existing_item:
         existing_item.quantity += 1
     else:
-        new_cart_item = CartItem(user_id=current_user.id, menu_item_id=menu_item_id, quantity=1)
+        new_cart_item = CartItem()
+        new_cart_item.user_id = current_user.id
+        new_cart_item.menu_item_id = menu_item_id
+        new_cart_item.quantity = 1
         db.session.add(new_cart_item)
         
     db.session.commit()
@@ -194,28 +197,26 @@ def checkout():
         
         restaurant_id = cart_items[0].menu_item.restaurant_id
         
-        new_order = Order(
-            user_id=current_user.id,
-            restaurant_id=restaurant_id,
-            total_amount=total,
-            delivery_fee=delivery_fee,
-            platform_fee=platform_fee,
-            delivery_address=address,
-            contact_phone=phone,
-            restaurant_instructions=restaurant_note,
-            delivery_instructions=delivery_note,
-            status='Pending'
-        )
+        new_order = Order()
+        new_order.user_id = current_user.id
+        new_order.restaurant_id = restaurant_id
+        new_order.total_amount = total
+        new_order.delivery_fee = delivery_fee
+        new_order.platform_fee = platform_fee
+        new_order.delivery_address = address
+        new_order.contact_phone = phone
+        new_order.restaurant_instructions = restaurant_note
+        new_order.delivery_instructions = delivery_note
+        new_order.status = 'Pending'
         db.session.add(new_order)
         db.session.flush() # get order id
         
         for item in cart_items:
-            order_item = OrderItem(
-                order_id=new_order.id,
-                menu_item_id=item.menu_item_id,
-                quantity=item.quantity,
-                price_at_time=item.menu_item.price
-            )
+            order_item = OrderItem()
+            order_item.order_id = new_order.id
+            order_item.menu_item_id = item.menu_item_id
+            order_item.quantity = item.quantity
+            order_item.price_at_time = item.menu_item.price
             db.session.add(order_item)
             db.session.delete(item)
             
@@ -260,13 +261,12 @@ def submit_review(order_id):
     rating = int(request.form.get('rating'))
     comment = request.form.get('comment')
     
-    new_review = Review(
-        order_id=order.id,
-        user_id=current_user.id,
-        restaurant_id=order.restaurant_id,
-        rating=rating,
-        comment=comment
-    )
+    new_review = Review()
+    new_review.order_id = order.id
+    new_review.user_id = current_user.id
+    new_review.restaurant_id = order.restaurant_id
+    new_review.rating = rating
+    new_review.comment = comment
     
     db.session.add(new_review)
     db.session.commit()
