@@ -1,6 +1,6 @@
 from app import create_app
 from extensions import db
-import models   # important: loads all models
+import models
 
 print("Starting database initialization...")
 

@@ -37,6 +37,8 @@ def create_app():
     app.register_blueprint(restaurant_bp, url_prefix='/restaurant')
     app.register_blueprint(delivery_bp, url_prefix='/delivery')
 
+    with app.app_context():
+        db.create_all()
 
     @app.route('/home')
     @app.route('/user/home')
