@@ -1,3 +1,4 @@
+import os
 from flask import Flask, redirect, url_for
 from config import Config
 from models import User
@@ -36,8 +37,6 @@ def create_app():
     app.register_blueprint(restaurant_bp, url_prefix='/restaurant')
     app.register_blueprint(delivery_bp, url_prefix='/delivery')
 
-    with app.app_context():
-        db.create_all()
 
     @app.route('/home')
     @app.route('/user/home')
@@ -48,4 +47,8 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    app.run(
+        host='0.0.0.0',
+        port=int(os.environ.get('PORT', 10000)),
+        debug=False
+    )
