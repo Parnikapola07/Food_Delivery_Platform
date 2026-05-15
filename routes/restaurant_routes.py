@@ -124,10 +124,23 @@ def update_order_status(order_id):
             flash(f'Order status updated to {new_status}.', 'success')
     return redirect(url_for('restaurant.orders'))
 
-@restaurant_bp.route('/api/orders/latest')
+@restaurant_bp.route('/api/orders/state')
 @login_required
-def api_latest_orders():
-    # Fetch the highest order ID for this restaurant
+def api_orders_state():
+    # Fetch all orders related to this restaurant that are not yet delivered
+    active_orders = Order.query.filter(
+        Order.restaurant_id == current_user.id,
+        Order.status != 'Delivered'
+    ).all()
+    
+    # Create a state string: order_id:status|order_id:status
+    state_str = "|".join([f"{o.id}:{o.status}:{o.delivery_partner_id}" for o in active_orders])
+    
+    # Also get the latest order ID for new order detection
     latest_order = Order.query.filter_by(restaurant_id=current_user.id).order_by(Order.id.desc()).first()
     latest_id = latest_order.id if latest_order else 0
-    return {'latest_order_id': latest_id}
+    
+    return {
+        'state_hash': state_str,
+        'latest_order_id': latest_id
+    }

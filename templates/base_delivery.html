@@ -90,7 +90,7 @@
     </script>
     <script>
         // Real-Time Order Updates (AJAX Polling)
-        let currentLatestOrderId = null;
+        let lastDeliveryStateHash = null;
         
         function playBeep() {
             try {
@@ -109,14 +109,14 @@
 
         setInterval(async () => {
             try {
-                const res = await fetch("{{ url_for('delivery.api_latest_orders') }}");
+                const res = await fetch("{{ url_for('delivery.api_orders_state') }}");
                 if (!res.ok) return;
                 const data = await res.json();
                 
-                if (currentLatestOrderId === null) {
-                    currentLatestOrderId = data.latest_order_id;
-                } else if (data.latest_order_id > currentLatestOrderId) {
-                    currentLatestOrderId = data.latest_order_id;
+                if (lastDeliveryStateHash === null) {
+                    lastDeliveryStateHash = data.state_hash;
+                } else if (data.state_hash !== lastDeliveryStateHash) {
+                    lastDeliveryStateHash = data.state_hash;
                     playBeep();
                     
                     const overlay = document.createElement('div');
@@ -133,17 +133,17 @@
                     overlay.style.fontWeight = '700';
                     overlay.style.fontSize = '1.1rem';
                     overlay.className = 'fade-up';
-                    overlay.innerHTML = '🛵 New Delivery Available! Auto-refreshing...';
+                    overlay.innerHTML = '🛵 Deliveries Updated! Refreshing...';
                     document.body.appendChild(overlay);
 
                     setTimeout(() => {
                         window.location.reload();
-                    }, 1500);
+                    }, 1200);
                 }
             } catch (err) {
                 console.error("Polling error:", err);
             }
-        }, 5000);
+        }, 3500);
     </script>
     {% block extra_js %}{% endblock %}
 </body>

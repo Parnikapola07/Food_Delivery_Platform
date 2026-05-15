@@ -47,9 +47,11 @@
         </div>
         <div class="timeline-track" style="--progress:{{ progress_pct }}">
             {% for i in range(stages|length) %}
-            <div class="step {% if i < current_idx %}done{% elif i == current_idx %}active{% endif %}">
-                <div class="dot">
-                    {% if i < current_idx %}✓{% else %}{{ stage_icons[i] }}{% endif %}
+            {% set is_done = i < current_idx %}
+            {% set is_active = i == current_idx %}
+            <div class="step {% if is_done %}done{% elif is_active %}active{% endif %}">
+                <div class="dot" {% if is_active and order.status == 'Delivered' %}style="background:var(--color-success); border-color:var(--color-success); box-shadow:0 0 15px rgba(34,197,94,0.5);" {% endif %}>
+                    {% if is_done or (is_active and order.status == 'Delivered') %}✓{% else %}{{ stage_icons[i] }}{% endif %}
                 </div>
                 <span class="step-label">{{ stages[i] }}</span>
             </div>
@@ -57,7 +59,7 @@
         </div>
         <p class="meta" style="text-align:center;margin-top:1.5rem;font-size:.82rem;">
             {% if order.status == 'Delivered' %}
-            🎉 Your order has been delivered. Enjoy your meal!
+            <span style="color:var(--color-success-dark); font-weight:700;">🎉 Your order has been delivered. Enjoy your meal!</span>
             {% elif order.status == 'Out for Delivery' %}
             🛵 Your order is on its way! Get ready to receive it.
             {% elif order.status == 'Preparing' or order.status == 'Ready' %}
@@ -69,6 +71,41 @@
             {% endif %}
         </p>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        // Trigger confetti on delivery
+        if ("{{ order.status }}" === "Delivered") {
+            const duration = 3 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+
+                const particleCount = 50 * (timeLeft / duration);
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+        }
+
+        // Auto-refresh when status changes
+        let lastStatus = "{{ order.status }}";
+        setInterval(async () => {
+            try {
+                const res = await fetch("{{ url_for('user.api_order_status', order_id=order.id) }}", {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await res.json();
+                if (data.status !== lastStatus) {
+                    window.location.reload();
+                }
+            } catch (err) { console.error(err); }
+        }, 8000);
+    </script>
 
     <!-- Order Details -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-top:1.1rem;" class="fade-up-2">

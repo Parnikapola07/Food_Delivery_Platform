@@ -5,7 +5,8 @@
 <div class="section-header fade-up">
     <div>
         <h1 class="section-title">Menu Management</h1>
-        <p class="section-subtitle">{{ menu_items|length }} item{{ 's' if menu_items|length != 1 else '' }} in your menu</p>
+        <p class="section-subtitle">{{ menu_items|length }} item{{ 's' if menu_items|length != 1 else '' }} in your menu
+        </p>
     </div>
     <a href="{{ url_for('restaurant.add_menu') }}" class="btn btn-primary" id="addItemBtn">+ Add New Item</a>
 </div>
@@ -13,13 +14,21 @@
 {% if menu_items %}
 <div class="grid fade-up-1">
     {% for item in menu_items %}
-    <div class="card {% if not item.is_active %}item-inactive{% endif %}" id="menuItem-{{ item.id }}" style="display:flex;flex-direction:column;">
-        <div class="restaurant-image"
-            style="height:170px;background-image:url('{{ item.image_url if item.image_url and item.image_url != 'default_food.jpg' else 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600' }}');position:relative;">
+    <div class="card {% if not item.is_active %}item-inactive{% endif %}" id="menuItem-{{ item.id }}"
+        style="display:flex;flex-direction:column;">
+        {% set bg_url = item.image_url if item.image_url and item.image_url != 'default_food.jpg' else
+        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600' %}
+        {% set category_style =
+        "position:absolute;top:10px;right:10px;z-index:2;background:var(--ink-900);color:#fff;padding:.25rem
+        .6rem;border-radius:var(--r-full);font-size:.74rem;font-weight:700;" %}
+        <div class="restaurant-image" style="height:170px;background-image:url('{{ bg_url }}');position:relative;">
             {% if not item.is_active %}
             <span class="offer-tag" style="background:rgba(0,0,0,0.7);">Unavailable</span>
             {% endif %}
-            <span style="position:absolute;top:10px;right:10px;z-index:2;background:var(--ink-900);color:#fff;padding:.25rem .6rem;border-radius:var(--r-full);font-size:.74rem;font-weight:700;">
+            {% set border_style = "border: 1px solid var(--ink-900);" if bg_url ==
+            'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600' else "" %}
+            {% set full_style_attr = 'style="' ~ border_style ~ ' ' ~ category_style ~ '"' %}
+            <span {{ full_style_attr|safe }}>
                 {{ item.category }}
             </span>
         </div>
@@ -29,15 +38,20 @@
                 <span style="font-weight:800;color:var(--brand-red);flex-shrink:0;">₹{{ '%.0f' % item.price }}</span>
             </div>
             {% if item.description %}
-            <p class="meta" style="flex:1;margin:.3rem 0 .9rem;line-height:1.5;">{{ item.description[:80] }}{% if item.description|length > 80 %}…{% endif %}</p>
+            <p class="meta" style="flex:1;margin:.3rem 0 .9rem;line-height:1.5;">{{ item.description[:80] }}{% if
+                item.description|length > 80 %}…{% endif %}</p>
             {% endif %}
 
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:auto;">
-                <a href="{{ url_for('restaurant.edit_menu', item_id=item.id) }}" class="btn btn-outline btn-sm" id="editItem-{{ item.id }}">
+                <a href="{{ url_for('restaurant.edit_menu', item_id=item.id) }}" class="btn btn-outline btn-sm"
+                    id="editItem-{{ item.id }}">
                     ✏️ Edit
                 </a>
-                <form action="{{ url_for('restaurant.toggle_menu_status', item_id=item.id) }}" method="POST" style="margin:0;">
-                    <button type="submit" class="btn btn-sm {% if item.is_active %}btn-outline{% else %}btn-primary{% endif %}" id="toggleItem-{{ item.id }}">
+                <form action="{{ url_for('restaurant.toggle_menu_status', item_id=item.id) }}" method="POST"
+                    style="margin:0;">
+                    <button type="submit"
+                        class="btn btn-sm {% if item.is_active %}btn-outline{% else %}btn-primary{% endif %}"
+                        id="toggleItem-{{ item.id }}">
                         {% if item.is_active %}📴 Disable{% else %}✅ Enable{% endif %}
                     </button>
                 </form>

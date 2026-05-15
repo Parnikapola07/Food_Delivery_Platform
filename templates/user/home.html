@@ -3,14 +3,17 @@
 
 {% block content %}
 <!-- HERO -->
-<section class="hero fade-up" style="background-image:url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1800');" aria-label="Hero Section">
+<section class="hero fade-up"
+    style="background-image:url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1800');"
+    aria-label="Hero Section">
     <div class="hero-content">
         <div class="hero-tag">🔥 100+ Top Restaurants</div>
         <h1>Craving something <span>delicious?</span></h1>
         <p>From premium fine dining to street food, discover the best restaurants near you — delivered fast.</p>
         <div class="hero-search" role="search">
-            <input type="text" id="heroSearchInput" placeholder="Search restaurants, cuisines, or dishes…" value="{{ request.args.get('search', '') }}" autocomplete="off" aria-label="Search food">
-            <button type="button" class="btn btn-primary" id="heroSearchBtn">🔍 Search</button>
+            <input type="text" id="heroSearchInput" placeholder="Search restaurants, cuisines, or dishes…"
+                value="{{ request.args.get('search', '') }}" autocomplete="off" aria-label="Search food">
+            <button type="button" class="btn btn-primary" id="heroSearchBtn">Search</button>
         </div>
     </div>
     <div class="hero-stats">
@@ -36,15 +39,16 @@
     </div>
     <div class="category-row">
         {% set cats = [
-            ('🍕','Pizza'),
-            ('🍔','Burgers'),
-            ('🍜','Noodles'),
-            ('🥗','Healthy'),
-            ('🌮','Mexican'),
-            ('🍣','Sushi'),
-            ('🍰','Desserts'),
-            ('☕','Beverages'),
-            ('🍛','Indian')
+        ('🍕','Pizza'),
+        ('🍔','Burgers'),
+        ('🍜','Chinese'),
+        ('🍛','Indian'),
+        ('🌮','Mexican'),
+        ('🥗','Healthy'),
+        ('🍣','Sushi'),
+        ('🍰','Desserts'),
+        ('☕','Beverages'),
+        ('🍟','Starters')
         ] %}
         {% for icon, name in cats %}
         <div class="category-card" onclick="filterByCategory('{{ name }}')">
@@ -67,21 +71,23 @@
         {% if restaurants %}
         <div class="grid" id="restaurantGrid">
             {% set images = [
-                'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800',
-                'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=800',
-                'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800',
-                'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&q=80&w=800',
-                'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&q=80&w=800',
-                'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&q=80&w=800'
+            'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&q=80&w=800'
             ] %}
-            {% set offers = ['Up to 30% OFF', '🎁 Free Delivery', 'Buy 2 Get 1', '20% OFF', 'New Arrival! 🆕', 'Weekend Special'] %}
+            {% set offers = ['Up to 30% OFF', '🎁 Free Delivery', 'Buy 2 Get 1', '20% OFF', 'New Arrival! 🆕', 'Weekend
+            Special'] %}
             {% set ratings = ['4.8', '4.5', '4.7', '4.6', '4.3', '4.9'] %}
             {% set times = ['20-30 min', '30-40 min', '25-35 min', '15-25 min', '35-45 min', '20-30 min'] %}
             {% set cuisines = ['Multi-cuisine', 'North Indian', 'Italian', 'Chinese', 'Fast Food', 'Continental'] %}
 
             {% for restaurant in restaurants %}
             {% set idx = loop.index0 % 6 %}
-            <a href="{{ url_for('user.restaurant_detail', restaurant_id=restaurant.id) }}" class="restaurant-card fade-up" id="rcard-{{ restaurant.id }}" data-delay="{{ loop.index0 * 0.05 }}s">
+            <a href="{{ url_for('user.restaurant_detail', restaurant_id=restaurant.id) }}"
+                class="restaurant-card fade-up" id="rcard-{{ restaurant.id }}" data-delay="{{ loop.index0 * 0.05 }}s">
                 <div class="restaurant-image" style="background-image:url('{{ images[idx] }}');">
                     <span class="offer-tag {% if loop.index % 3 == 0 %}hot{% endif %}">{{ offers[idx] }}</span>
                     <span class="rating-badge">★ {{ ratings[idx] }}</span>
@@ -90,7 +96,8 @@
                     <div class="card-title-row">
                         <h3>{{ restaurant.username }}</h3>
                     </div>
-                    <p class="meta" style="margin:.2rem 0 .45rem;">{{ cuisines[idx] }}{% if restaurant.address %} &bull; {{ restaurant.address[:30] }}{% endif %}</p>
+                    <p class="meta" style="margin:.2rem 0 .45rem;">{{ cuisines[idx] }}{% if restaurant.address %} &bull;
+                        {{ restaurant.address[:30] }}{% endif %}</p>
                     <div class="delivery-chips">
                         <span class="chip">⏱ {{ times[idx] }}</span>
                         <span class="chip">🛵 Free delivery</span>
@@ -110,21 +117,18 @@
 
     <!-- LIVE SEARCH RESULTS -->
     <section id="liveSearchResults" style="display:none;" aria-live="polite">
-        <h2 class="section-title" id="searchResultsTitle">Search Results</h2>
+        <h2 class="section-title" id="searchResultsTitle" style="margin-bottom: 2rem;">Search Results</h2>
 
-        <div id="restaurantsSection" style="margin-bottom:2rem;">
-            <h3 style="font-size:1rem;font-weight:600;color:var(--ink-500);margin:1rem 0 .75rem;text-transform:uppercase;letter-spacing:.06em;">Restaurants</h3>
+        <div id="exactRestaurantsSection" style="margin-bottom:3rem; display:none;">
+            <h3 style="font-size:1rem;font-weight:600;color:var(--ink-500);margin:1rem 0 .75rem;text-transform:uppercase;letter-spacing:.06em;">Direct Restaurant Matches</h3>
             <div class="grid" id="restaurantsGrid"></div>
-            <div id="noRestaurantsMsg" class="panel empty-state" style="display:none;padding:1.5rem;">
-                <p class="muted">No restaurants match your search.</p>
-            </div>
         </div>
 
-        <div id="menuItemsSection">
-            <h3 style="font-size:1rem;font-weight:600;color:var(--ink-500);margin:1rem 0 .75rem;text-transform:uppercase;letter-spacing:.06em;">Dishes & Menu Items</h3>
-            <div class="grid" id="menuItemsGrid"></div>
-            <div id="noMenuItemsMsg" class="panel empty-state" style="display:none;padding:1.5rem;">
-                <p class="muted">No dishes match your search.</p>
+        <div id="groupedResultsSection">
+            <h3 style="font-size:1rem;font-weight:600;color:var(--ink-500);margin:1rem 0 .75rem;text-transform:uppercase;letter-spacing:.06em;">Dishes by Restaurant</h3>
+            <div id="groupedResultsContainer"></div>
+            <div id="noResultsMsg" class="panel empty-state" style="display:none;padding:1.5rem;">
+                <p class="muted">No dishes or restaurants match your search.</p>
             </div>
         </div>
     </section>
@@ -134,64 +138,71 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Apply animation delays from data attributes to satisfy CSS linters
-    document.querySelectorAll('[data-delay]').forEach(el => {
-        el.style.animationDelay = el.dataset.delay;
-    });
+    document.addEventListener('DOMContentLoaded', function () {
+        // Apply animation delays from data attributes to satisfy CSS linters
+        document.querySelectorAll('[data-delay]').forEach(el => {
+            el.style.animationDelay = el.dataset.delay;
+        });
 
-    const heroInput = document.getElementById('heroSearchInput');
-    const heroBtn = document.getElementById('heroSearchBtn');
-    const defaultSection = document.getElementById('defaultRestaurants');
-    const liveSection = document.getElementById('liveSearchResults');
-    const restaurantsGrid = document.getElementById('restaurantsGrid');
-    const menuItemsGrid = document.getElementById('menuItemsGrid');
-    const noRestMsg = document.getElementById('noRestaurantsMsg');
-    const noMenuMsg = document.getElementById('noMenuItemsMsg');
-    const searchTitle = document.getElementById('searchResultsTitle');
-    let debounceTimer;
+        const heroInput = document.getElementById('heroSearchInput');
+        const heroBtn = document.getElementById('heroSearchBtn');
+        const defaultSection = document.getElementById('defaultRestaurants');
+        const liveSection = document.getElementById('liveSearchResults');
+        const restaurantsGrid = document.getElementById('restaurantsGrid');
+        const exactSection = document.getElementById('exactRestaurantsSection');
+        const groupedContainer = document.getElementById('groupedResultsContainer');
+        const searchTitle = document.getElementById('searchResultsTitle');
+        let debounceTimer;
+        let userCartState = {};
 
-    const IMAGES = [
-        'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800',
-        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
-        'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&q=80&w=800'
-    ];
+        const IMAGES = [
+            'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&q=80&w=800'
+        ];
 
-    function showLive() { defaultSection.style.display='none'; liveSection.style.display='block'; }
-    function showDefault() { defaultSection.style.display='block'; liveSection.style.display='none'; }
+        function showLive() { defaultSection.style.display = 'none'; liveSection.style.display = 'block'; }
+        function showDefault() { defaultSection.style.display = 'block'; liveSection.style.display = 'none'; }
 
-    function fetchResults(q) {
-        if (!q) { showDefault(); return; }
-        fetch(`/user/api/search?q=${encodeURIComponent(q)}`)
-            .then(r => r.json())
-            .then(data => {
-                showLive();
-                searchTitle.textContent = `Results for "${q}"`;
-                renderRestaurants(data.restaurants);
-                renderMenuItems(data.menu_items);
-            })
-            .catch(() => showDefault());
-    }
+        function fetchResults(q) {
+            if (!q) { showDefault(); return; }
+            fetch(`/api/search?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(data => {
+                    showLive();
+                    searchTitle.textContent = `Results for "${q}"`;
+                    userCartState = data.user_cart || {};
+                    renderRestaurants(data.restaurants);
+                    renderGroupedResults(data.grouped_results);
+                    
+                    if (data.restaurants.length === 0 && data.grouped_results.length === 0) {
+                        noResultsMsg.style.display = 'block';
+                    } else {
+                        noResultsMsg.style.display = 'none';
+                    }
+                })
+                .catch(() => showDefault());
+        }
 
-    heroBtn.addEventListener('click', () => fetchResults(heroInput.value.trim()));
-    heroInput.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        const q = this.value.trim();
-        if (!q) { showDefault(); return; }
-        debounceTimer = setTimeout(() => fetchResults(q), 280);
-    });
-    heroInput.addEventListener('keydown', e => { if (e.key === 'Enter') fetchResults(heroInput.value.trim()); });
+        heroBtn.addEventListener('click', () => fetchResults(heroInput.value.trim()));
+        heroInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const q = this.value.trim();
+            if (!q) { showDefault(); return; }
+            debounceTimer = setTimeout(() => fetchResults(q), 280);
+        });
+        heroInput.addEventListener('keydown', e => { if (e.key === 'Enter') fetchResults(heroInput.value.trim()); });
 
-    function renderRestaurants(items) {
-        restaurantsGrid.innerHTML = '';
-        if (!items.length) { restaurantsGrid.style.display='none'; noRestMsg.style.display='block'; return; }
-        restaurantsGrid.style.display='grid'; noRestMsg.style.display='none';
-        items.forEach((r, i) => {
-            const img = IMAGES[i % IMAGES.length];
-            const a = document.createElement('a');
-            a.href = `/user/restaurant/${r.id}`;
-            a.className = 'restaurant-card';
-            a.innerHTML = `
+        function renderRestaurants(items) {
+            restaurantsGrid.innerHTML = '';
+            if (!items.length) { exactSection.style.display = 'none'; return; }
+            exactSection.style.display = 'block';
+            items.forEach((r, i) => {
+                const img = IMAGES[i % IMAGES.length];
+                const a = document.createElement('a');
+                a.href = `/menu/${r.id}`;
+                a.className = 'restaurant-card';
+                a.innerHTML = `
                 <div class="restaurant-image" style="background-image:url('${r.image_url || img}')">
                     <span class="offer-tag">See Menu</span>
                     <span class="rating-badge">★ 4.5</span>
@@ -201,42 +212,121 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p class="meta" style="margin:.2rem 0 .45rem;">${r.address || 'Nearby'}</p>
                     <div class="delivery-chips"><span class="chip">⏱ 30-40 min</span></div>
                 </div>`;
-            restaurantsGrid.appendChild(a);
-        });
-    }
+                restaurantsGrid.appendChild(a);
+            });
+        }
 
-    function renderMenuItems(items) {
-        menuItemsGrid.innerHTML = '';
-        if (!items.length) { menuItemsGrid.style.display='none'; noMenuMsg.style.display='block'; return; }
-        menuItemsGrid.style.display='grid'; noMenuMsg.style.display='none';
-        items.forEach((item, i) => {
-            const img = IMAGES[i % IMAGES.length];
-            const d = document.createElement('div');
-            d.className = 'restaurant-card';
-            d.style.cursor = 'pointer';
-            d.onclick = () => window.location = `/user/restaurant/${item.restaurant_id}`;
-            d.innerHTML = `
-                <div class="restaurant-image" style="background-image:url('${item.image_url || img}');height:160px;"></div>
-                <div class="card-content">
-                    <div class="card-title-row">
-                        <h3>${item.name}</h3>
-                        <span style="font-weight:800;color:var(--brand-red);">₹${item.price.toFixed(0)}</span>
+        function renderGroupedResults(groups) {
+            groupedContainer.innerHTML = '';
+            if (!groups.length) { return; }
+            
+            groups.forEach(group => {
+                const section = document.createElement('div');
+                section.className = 'grouped-restaurant-section fade-up';
+                section.style.marginBottom = '2.5rem';
+                
+                section.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; padding:1rem; background:var(--surface-1); border-radius:var(--r-md); border:1px solid rgba(0,0,0,0.04);">
+                        <div style="width:52px; height:52px; border-radius:var(--r-md); background:var(--brand-gradient); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.3rem; box-shadow:var(--shadow-brand);">
+                            ${group.restaurant_name.charAt(0)}
+                        </div>
+                        <div style="flex:1;">
+                            <h4 style="font-size:1.25rem; font-weight:800; margin:0; letter-spacing:-0.02em;">${group.restaurant_name}</h4>
+                            <p class="meta" style="margin:2px 0 0; color:var(--brand-red); font-weight:600; font-size:0.82rem;">${group.restaurant_description}</p>
+                        </div>
+                        <a href="/menu/${group.restaurant_id}" class="btn btn-outline btn-sm" style="border-radius:var(--r-full); padding:0.4rem 1rem;">View Menu</a>
                     </div>
-                    <p class="meta" style="margin:.2rem 0;">From: <strong>${item.restaurant_name}</strong></p>
-                    <p class="meta">${item.description || 'Freshly prepared with quality ingredients.'}</p>
-                </div>`;
-            menuItemsGrid.appendChild(d);
-        });
-    }
+                    <div class="dish-list" style="display:flex; flex-direction:column; gap:1rem;"></div>
+                `;
+                
+                const grid = section.querySelector('.dish-list');
+                group.items.forEach((item, i) => {
+                    const img = IMAGES[i % IMAGES.length];
+                    const d = document.createElement('div');
+                    d.className = 'premium-card dish-row fade-up';
+                    d.style.display = 'flex';
+                    d.style.padding = '1.25rem';
+                    d.style.gap = '1.5rem';
+                    d.style.alignItems = 'center';
+                    d.style.background = 'var(--surface-1)';
+                    d.style.borderRadius = 'var(--r-lg)';
+                    d.style.border = '1px solid rgba(0,0,0,0.05)';
+                    d.style.boxShadow = 'var(--shadow-xs)';
+                    
+                    d.innerHTML = `
+                        <div style="flex:1;">
+                            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+                                <span style="width:12px; height:12px; border:1px solid #22C55E; display:flex; align-items:center; justify-content:center; border-radius:2px;"><span style="width:6px; height:6px; background:#22C55E; border-radius:50%;"></span></span>
+                                <span style="font-size:0.7rem; font-weight:700; color:#22C55E; text-transform:uppercase; letter-spacing:0.05em;">Bestseller</span>
+                            </div>
+                            <h3 style="font-size:1.1rem; font-weight:700; margin:0 0 0.25rem; color:var(--ink-900); cursor:pointer;" onclick="window.location='/menu/${group.restaurant_id}'">${item.name}</h3>
+                            <div style="font-weight:800; color:var(--ink-900); font-size:1rem; margin-bottom:0.5rem;">₹${item.price.toFixed(0)}</div>
+                            <p class="muted" style="font-size:0.85rem; margin:0 0 1rem; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${item.description || 'Crafted with the finest ingredients for a truly premium experience.'}</p>
+                            <div id="item-ctrl-${item.id}">${getCartBtnHtml(item.id)}</div>
+                        </div>
+                        <div style="width:130px; height:130px; border-radius:var(--r-md); overflow:hidden; position:relative; flex-shrink:0; cursor:pointer;" onclick="window.location='/menu/${group.restaurant_id}'">
+                            <img src="${item.image_url || img}" style="width:100%; height:100%; object-fit:cover;">
+                        </div>
+                    `;
+                    grid.appendChild(d);
+                });
+                
+                groupedContainer.appendChild(section);
+            });
+        }
 
-    // Category filter (visual only — highlights card matching name in restaurant cards)
-    window.filterByCategory = function(cat) {
-        document.querySelectorAll('.category-card').forEach(c => {
-            c.classList.toggle('active', c.querySelector('p').textContent === cat);
-        });
-        const q = cat.toLowerCase();
-        fetchResults(q);
-    };
-});
+        function getCartBtnHtml(itemId) {
+            const qty = userCartState[itemId] || 0;
+            if (qty > 0) {
+                return `
+                    <div class="qty-control" style="display:inline-flex; align-items:center; gap:1rem; background:var(--white); padding:0.35rem 0.8rem; border-radius:var(--r-md); border:1.5px solid var(--brand-red); box-shadow:var(--shadow-sm);">
+                        <button onclick="addToCart(${itemId}, 'decrease')" style="border:none; background:none; font-weight:900; padding:0; color:var(--brand-red); font-size:1.2rem; cursor:pointer;">−</button>
+                        <span style="font-weight:800; font-size:0.95rem; min-width:18px; text-align:center; color:var(--brand-red);">${qty}</span>
+                        <button onclick="addToCart(${itemId}, 'increase')" style="border:none; background:none; font-weight:900; padding:0; color:var(--brand-red); font-size:1.2rem; cursor:pointer;">＋</button>
+                    </div>
+                `;
+            }
+            return `
+                <button class="btn btn-outline" onclick="addToCart(${itemId}, 'increase')" style="padding:0.4rem 1.5rem; font-size:0.85rem; font-weight:800; border-radius:var(--r-md); border-color:var(--ink-200); color:var(--brand-red); background:white; min-width:85px;">
+                    ADD
+                </button>
+            `;
+        }
+
+        // Global Add to Cart function
+        window.addToCart = function (itemId, action = 'increase') {
+            fetch(`/add_to_cart/${itemId}?action=${action}`, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        userCartState[itemId] = data.new_qty;
+                        const ctrl = document.getElementById(`item-ctrl-${itemId}`);
+                        if (ctrl) ctrl.innerHTML = getCartBtnHtml(itemId);
+                        
+                        const badge = document.querySelector('.icon-button .badge');
+                        if (badge) badge.textContent = data.cart_count;
+                        
+                        if (action === 'increase' && data.new_qty === 1) {
+                             window.showToast('Added to cart', 'success');
+                        }
+                    } else {
+                        window.showToast(data.message, 'warning');
+                    }
+                })
+                .catch(() => window.location.href = '/login');
+        };
+
+        // Category filter
+        window.filterByCategory = function (cat) {
+            document.querySelectorAll('.category-card').forEach(c => {
+                c.classList.toggle('active', c.querySelector('p').textContent === cat);
+            });
+            const q = cat.toLowerCase();
+            fetchResults(q);
+        };
+    });
 </script>
 {% endblock %}

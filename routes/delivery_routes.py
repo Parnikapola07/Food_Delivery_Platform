@@ -66,10 +66,17 @@ def update_status(order_id):
             flash(f'Order marked as {status}.', 'success')
     return redirect(url_for('delivery.assigned_orders'))
 
-@delivery_bp.route('/api/orders/latest')
+@delivery_bp.route('/api/orders/state')
 @login_required
-def api_latest_orders():
-    # Fetch the highest order ID among available 'Ready' orders
-    latest_order = Order.query.filter_by(status='Ready', delivery_partner_id=None).order_by(Order.id.desc()).first()
-    latest_id = latest_order.id if latest_order else 0
-    return {'latest_order_id': latest_id}
+def api_orders_state():
+    # 1. Check for new 'Ready' orders (available for pickup)
+    available_orders = Order.query.filter_by(status='Ready', delivery_partner_id=None).all()
+    available_str = "|".join([str(o.id) for o in available_orders])
+    
+    # 2. Check for status changes in assigned orders
+    my_orders = Order.query.filter_by(delivery_partner_id=current_user.id).all()
+    my_str = "|".join([f"{o.id}:{o.status}" for o in my_orders])
+    
+    return {
+        'state_hash': f"avail:{available_str}|mine:{my_str}"
+    }

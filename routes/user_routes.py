@@ -23,16 +23,9 @@ def api_search():
     search = request.args.get('q', '').strip()
     
     if not search:
-        # Return empty lists if no search query
-        return {'restaurants': [], 'menu_items': []}
+        return {'restaurants': [], 'menu_items': [], 'grouped_results': []}
 
-    # Search for matching restaurants
-    restaurants = User.query.filter(
-        User.role == 'restaurant',
-        or_(User.username.ilike(f'%{search}%'), User.address.ilike(f'%{search}%'))
-    ).all()
-    
-    # Search for matching menu items
+    # 1. Search for matching menu items
     menu_items = MenuItem.query.filter(
         MenuItem.is_active == True,
         or_(
@@ -42,7 +35,36 @@ def api_search():
         )
     ).all()
     
-    # Format the results for JSON response
+    # Group items by restaurant
+    grouped_data = {}
+    for item in menu_items:
+        r_id = item.restaurant_id
+        if r_id not in grouped_data:
+            restaurant = User.query.get(r_id)
+            if restaurant:
+                grouped_data[r_id] = {
+                    'restaurant_id': restaurant.id,
+                    'restaurant_name': restaurant.username,
+                    'restaurant_address': restaurant.address,
+                    'restaurant_description': 'Top rated • Gourmet & Fast Food • 4.5 ★',
+                    'items': []
+                }
+        
+        if r_id in grouped_data:
+            grouped_data[r_id]['items'].append({
+                'id': item.id,
+                'name': item.name,
+                'description': item.description,
+                'price': float(item.price),
+                'image_url': item.image_url or 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400'
+            })
+
+    # 2. Search for matching restaurants (by name/address)
+    restaurants = User.query.filter(
+        User.role == 'restaurant',
+        or_(User.username.ilike(f'%{search}%'), User.address.ilike(f'%{search}%'))
+    ).all()
+    
     restaurant_results = []
     for r in restaurants:
         restaurant_results.append({
@@ -52,24 +74,17 @@ def api_search():
             'image_url': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600'
         })
         
-    menu_item_results = []
-    for item in menu_items:
-        # Get the associated restaurant for the item
-        restaurant = User.query.get(item.restaurant_id)
-        if restaurant:
-            menu_item_results.append({
-                'id': item.id,
-                'name': item.name,
-                'description': item.description,
-                'price': float(item.price),
-                'image_url': item.image_url or 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
-                'restaurant_id': restaurant.id,
-                'restaurant_name': restaurant.username
-            })
-            
+    # 3. Get user's cart if authenticated
+    user_cart = {}
+    if current_user.is_authenticated:
+        cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+        for ci in cart_items:
+            user_cart[ci.menu_item_id] = ci.quantity
+
     return {
         'restaurants': restaurant_results,
-        'menu_items': menu_item_results
+        'grouped_results': list(grouped_data.values()),
+        'user_cart': user_cart
     }
 
 @user_bp.route('/menu/<int:restaurant_id>')
@@ -97,6 +112,7 @@ def restaurant_detail(restaurant_id):
 @user_bp.route('/add_to_cart/<int:menu_item_id>', methods=['POST'])
 @login_required
 def add_to_cart(menu_item_id):
+    action = request.args.get('action', 'increase')
     menu_item = MenuItem.query.get_or_404(menu_item_id)
     cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
     
@@ -108,22 +124,38 @@ def add_to_cart(menu_item_id):
         return redirect(url_for('user.restaurant_detail', restaurant_id=menu_item.restaurant_id))
     
     existing_item = CartItem.query.filter_by(user_id=current_user.id, menu_item_id=menu_item_id).first()
+    
+    new_qty = 0
     if existing_item:
-        existing_item.quantity += 1
-    else:
+        if action == 'increase':
+            existing_item.quantity += 1
+        else:
+            existing_item.quantity -= 1
+            if existing_item.quantity <= 0:
+                db.session.delete(existing_item)
+                existing_item = None
+        if existing_item: new_qty = existing_item.quantity
+    elif action == 'increase':
         new_cart_item = CartItem()
         new_cart_item.user_id = current_user.id
         new_cart_item.menu_item_id = menu_item_id
         new_cart_item.quantity = 1
         db.session.add(new_cart_item)
+        new_qty = 1
         
     db.session.commit()
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         cart_count = sum(item.quantity for item in CartItem.query.filter_by(user_id=current_user.id).all())
-        return {'success': True, 'message': 'Item added to cart.', 'cart_count': cart_count}
+        return {
+            'success': True, 
+            'message': 'Cart updated.', 
+            'cart_count': cart_count,
+            'item_id': menu_item_id,
+            'new_qty': new_qty
+        }
         
-    flash('Item added to cart.', 'success')
+    flash('Cart updated.', 'success')
     return redirect(url_for('user.restaurant_detail', restaurant_id=menu_item.restaurant_id))
 
 @user_bp.route('/cart')
@@ -240,6 +272,17 @@ def order_tracking(order_id):
         flash('Unauthorized', 'danger')
         return redirect(url_for('user.home'))
     return render_template('user/order_tracking.html', order=order)
+
+@user_bp.route('/api/order/status/<int:order_id>')
+@login_required
+def api_order_status(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        return {'error': 'Unauthorized'}, 403
+    return {
+        'status': order.status,
+        'id': order.id
+    }
 
 @user_bp.route('/submit_review/<int:order_id>', methods=['POST'])
 @login_required

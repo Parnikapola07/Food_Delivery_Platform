@@ -31,7 +31,7 @@
                 <div class="form-group">
                     <label class="form-label" for="category">Category <span style="color:var(--brand-red);">*</span></label>
                     <select name="category" id="category" class="form-control" required>
-                        {% set cats = ['Starters','Main Course','Breads','Rice & Biryani','Soups','Desserts','Beverages','Fast Food','Pizza','Rolls & Wraps'] %}
+                        {% set cats = ['Pizza','Burgers','Chinese','Indian','Mexican','Healthy','Sushi','Desserts','Beverages','Starters'] %}
                         {% for cat in cats %}
                         <option value="{{ cat }}" {% if item.category == cat %}selected{% endif %}>{{ cat }}</option>
                         {% endfor %}
