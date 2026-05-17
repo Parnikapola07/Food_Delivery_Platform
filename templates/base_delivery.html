@@ -6,6 +6,26 @@
     <title>{% block title %}Delivery Portal | ZestyEat{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        (function() {
+            const savedAccent = localStorage.getItem('theme-accent');
+            if (savedAccent) {
+                document.documentElement.style.setProperty('--brand-red', savedAccent);
+                document.documentElement.style.setProperty('--primary', savedAccent);
+            }
+            if (localStorage.getItem('oled-mode') === 'true') {
+                document.documentElement.style.setProperty('--bg-base', '#000000');
+                document.documentElement.style.setProperty('--bg-surface', '#05070a');
+            }
+            const dm = localStorage.getItem('dark-mode');
+            if (dm !== 'false') {
+                document.documentElement.classList.add('dark-mode');
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.body.classList.add('dark-mode');
+                });
+            }
+        })();
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -48,6 +68,9 @@
                 </a>
                 <a href="{{ url_for('delivery.assigned_orders') }}" class="nav-item {% if request.endpoint == 'delivery.assigned_orders' %}active{% endif %}">
                     <span>📦</span> My Deliveries
+                </a>
+                <a href="{{ url_for('auth.profile') }}" class="nav-item {% if request.endpoint == 'auth.profile' %}active{% endif %}">
+                    <span>⚙️</span> Settings
                 </a>
                 <div style="margin-top:1.5rem;padding:.75rem .8rem;background:var(--color-success-bg);border-radius:var(--r-sm);border:1px solid rgba(34,197,94,0.12);">
                     <div style="font-size:.78rem;font-weight:700;color:var(--color-success-dark);margin-bottom:.25rem;">Status</div>

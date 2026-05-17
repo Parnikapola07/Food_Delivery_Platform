@@ -39,6 +39,34 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        # Safe migration for profile_pic
+        try:
+            db.session.execute(db.text('ALTER TABLE "user" ADD COLUMN profile_pic VARCHAR(250) DEFAULT \'default_profile.png\''))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+    @app.context_processor
+    def inject_global_variables():
+        pending_count = 0
+        try:
+            from flask_login import current_user
+            if current_user.is_authenticated and current_user.role == 'restaurant':
+                from models import Order
+                pending_count = Order.query.filter_by(restaurant_id=current_user.id, status='Pending').count()
+        except Exception:
+            pass
+        return dict(pending_orders_count=pending_count)
+
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        import traceback
+        try:
+            with open('error.log', 'w') as f:
+                f.write(traceback.format_exc())
+        except Exception:
+            pass
+        return f"Internal Server Error: {str(e)}", 500
 
     @app.route('/home')
     @app.route('/user/home')

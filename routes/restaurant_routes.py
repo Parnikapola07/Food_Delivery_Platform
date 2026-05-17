@@ -105,10 +105,12 @@ def toggle_menu_status(item_id):
         flash(f'Menu item marked as {status}.', 'success')
     return redirect(url_for('restaurant.manage_menu'))
 
+from sqlalchemy.orm import joinedload
+
 @restaurant_bp.route('/orders')
 @login_required
 def orders():
-    all_orders = Order.query.filter_by(restaurant_id=current_user.id).order_by(Order.created_at.desc()).all()
+    all_orders = Order.query.options(joinedload(Order.customer), joinedload(Order.items)).filter_by(restaurant_id=current_user.id).order_by(Order.created_at.desc()).all()
     return render_template('restaurant/orders.html', orders=all_orders)
 
 @restaurant_bp.route('/orders/update/<int:order_id>', methods=['POST'])

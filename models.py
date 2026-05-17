@@ -10,6 +10,7 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(20), nullable=False, default='user') # 'user', 'restaurant', 'delivery'
     phone = db.Column(db.String(20), nullable=True)
     address = db.Column(db.Text, nullable=True)
+    profile_pic = db.Column(db.String(250), nullable=True, default='default_profile.png')
     
     # Relationships
     menus = db.relationship('MenuItem', backref='restaurant', lazy=True, foreign_keys='MenuItem.restaurant_id')

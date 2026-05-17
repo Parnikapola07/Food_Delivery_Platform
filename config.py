@@ -13,3 +13,10 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = db_url or 'sqlite:///food_delivery.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_recycle": 1800,
+        "pool_pre_ping": True
+    }

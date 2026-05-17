@@ -8,6 +8,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        (function() {
+            const savedAccent = localStorage.getItem('theme-accent');
+            if (savedAccent) {
+                document.documentElement.style.setProperty('--brand-red', savedAccent);
+                document.documentElement.style.setProperty('--primary', savedAccent);
+            }
+            if (localStorage.getItem('oled-mode') === 'true') {
+                document.documentElement.style.setProperty('--bg-base', '#000000');
+                document.documentElement.style.setProperty('--bg-surface', '#05070a');
+            }
+            const dm = localStorage.getItem('dark-mode');
+            if (dm !== 'false') {
+                document.documentElement.classList.add('dark-mode');
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.body.classList.add('dark-mode');
+                });
+            }
+        })();
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 
@@ -75,6 +95,10 @@
                     <span
                         style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);width:8px;height:8px;background:var(--brand-red);border-radius:50%;box-shadow:0 0 0 2px #fff;"></span>
                     {% endif %}
+                </a>
+                <a href="{{ url_for('auth.profile') }}"
+                    class="nav-item {% if request.endpoint == 'auth.profile' %}active{% endif %}" id="navSettings">
+                    <span>⚙️</span> Settings
                 </a>
                 <div
                     style="margin-top:1.5rem;padding:.75rem .8rem;background:rgba(79,70,229,0.08);border-radius:var(--r-sm);border:1px solid rgba(79,70,229,0.15);">

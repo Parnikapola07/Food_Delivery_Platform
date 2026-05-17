@@ -1,0 +1,320 @@
+{% extends layout_template %}
+{% block title %}Settings | ZestyEat{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-container {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+        margin-top: 1rem;
+    }
+    @media (max-width: 900px) {
+        .profile-container { grid-template-columns: 1fr; }
+    }
+    .profile-card {
+        text-align: center;
+        padding: 2rem 1.5rem;
+    }
+    .profile-avatar-wrapper {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1.5rem;
+    }
+    .profile-avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--ink-50);
+        box-shadow: var(--shadow-md);
+        background: var(--ink-50);
+    }
+    .file-upload-btn {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: var(--brand-red);
+        color: white;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(255, 61, 61, 0.3);
+        border: 2px solid var(--ink-50);
+        transition: transform 0.2s ease;
+    }
+    .file-upload-btn:hover {
+        transform: scale(1.1);
+    }
+    .theme-preset {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .theme-preset.active {
+        border-color: white;
+        transform: scale(1.1);
+    }
+    /* Switch styling */
+    .switch input:checked + .slider {
+        background-color: var(--brand-red) !important;
+    }
+    .switch input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section-header fade-up">
+    <h1 class="section-title">Account Settings</h1>
+    <span class="section-subtitle">Manage your profile details, password, and app customisations.</span>
+</div>
+
+<div class="profile-container fade-up-1">
+    <!-- Left: Profile Widget -->
+    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+        <div class="panel profile-card">
+            <form action="{{ url_for('auth.profile') }}" method="POST" enctype="multipart/form-data" id="avatarForm">
+                <input type="hidden" name="action" value="update_profile">
+                <input type="hidden" name="username" value="{{ current_user.username }}">
+                <input type="hidden" name="email" value="{{ current_user.email }}">
+                <input type="hidden" name="phone" value="{{ current_user.phone or '' }}">
+                <input type="hidden" name="address" value="{{ current_user.address or '' }}">
+                
+                <div class="profile-avatar-wrapper">
+                    <img src="{{ current_user.profile_pic or 'https://api.dicebear.com/7.x/bottts/svg?seed=' ~ current_user.username }}" alt="Avatar" class="profile-avatar" id="avatarPreview">
+                    <label for="profilePicInput" class="file-upload-btn" title="Upload custom photo">
+                        📷
+                    </label>
+                    <input type="file" id="profilePicInput" name="profile_pic" accept="image/*" style="display:none;" onchange="previewImage(event)">
+                </div>
+            </form>
+            
+            <h3 style="margin:0 0 .25rem; font-size:1.15rem;">{{ current_user.username }}</h3>
+            <span class="status-pill status-pending" style="font-size:0.75rem; text-transform:uppercase;">{{ current_user.role }}</span>
+            <div style="font-size:0.8rem; color:var(--ink-400); margin-top:0.75rem;">Member since {{ current_user.id * 3 + 2023 }}</div>
+        </div>
+        
+        <!-- App Personalization -->
+        <div class="panel" style="padding:1.5rem;">
+            <h3 style="margin:0 0 1rem; font-size:1rem;">🎨 UI Themes</h3>
+            
+            <div style="margin-bottom:1.25rem;">
+                <div class="meta" style="margin-bottom:0.5rem; font-weight:600;">Dark Theme Mode</div>
+                <div style="display:flex; align-items:center; justify-content:between; width:100%;">
+                    <span style="font-size:0.85rem; color:var(--ink-500);">Sleek Midnight Styling</span>
+                    <label class="switch" style="position:relative; display:inline-block; width:44px; height:24px;">
+                        <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" style="opacity:0; width:0; height:0;">
+                        <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:34px;" class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-bottom:1.25rem;">
+                <div class="meta" style="margin-bottom:0.5rem; font-weight:600;">OLED Midnight Mode</div>
+                <div style="display:flex; align-items:center; justify-content:between; width:100%;">
+                    <span style="font-size:0.85rem; color:var(--ink-500);">Deep Pitch Black Mode</span>
+                    <label class="switch" style="position:relative; display:inline-block; width:44px; height:24px;">
+                        <input type="checkbox" id="oledToggle" onchange="toggleOledMode()" style="opacity:0; width:0; height:0;">
+                        <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:34px;" class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div>
+                <div class="meta" style="margin-bottom:0.6rem; font-weight:600;">Accent Highlights</div>
+                <div style="display:flex; gap:0.75rem;">
+                    <div class="theme-preset active" data-color="#ff3d3d" style="background:#ff3d3d;" onclick="setAccent('#ff3d3d', this)" title="Neon Crimson"></div>
+                    <div class="theme-preset" data-color="#10b981" style="background:#10b981;" onclick="setAccent('#10b981', this)" title="Emerald Green"></div>
+                    <div class="theme-preset" data-color="#4f46e5" style="background:#4f46e5;" onclick="setAccent('#4f46e5', this)" title="Indigo Royal"></div>
+                    <div class="theme-preset" data-color="#f59e0b" style="background:#f59e0b;" onclick="setAccent('#f59e0b', this)" title="Golden Amber"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right: Account Fields -->
+    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+        <!-- General Info -->
+        <div class="panel" style="padding:1.75rem 2rem;">
+            <h3 style="margin:0 0 1.5rem; font-size:1.15rem; display:flex; align-items:center; gap:0.5rem;">
+                👤 <span>General Profile Details</span>
+            </h3>
+            
+            <form action="{{ url_for('auth.profile') }}" method="POST" id="profileForm">
+                <input type="hidden" name="action" value="update_profile">
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label" style="font-size:0.8rem;">Full Name / Display Name</label>
+                        <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:0.8rem;">Email Address</label>
+                        <input type="email" name="email" class="form-control" value="{{ current_user.email }}" required>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom:1rem;">
+                    <label class="form-label" style="font-size:0.8rem;">Phone Number</label>
+                    <input type="text" name="phone" class="form-control" placeholder="+91 XXXXX XXXXX" value="{{ current_user.phone or '' }}">
+                </div>
+                
+                <div style="margin-bottom:1.5rem;">
+                    <label class="form-label" style="font-size:0.8rem;">Physical / Delivery Address</label>
+                    <textarea name="address" rows="3" class="form-control" placeholder="Complete address detail...">{{ current_user.address or '' }}</textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+            </form>
+        </div>
+        
+        <!-- Change Password -->
+        <div class="panel" style="padding:1.75rem 2rem;">
+            <h3 style="margin:0 0 1.5rem; font-size:1.15rem; display:flex; align-items:center; gap:0.5rem;">
+                🔒 <span>Change Password</span>
+            </h3>
+            
+            <form action="{{ url_for('auth.profile') }}" method="POST">
+                <input type="hidden" name="action" value="change_password">
+                
+                <div style="margin-bottom:1rem;">
+                    <label class="form-label" style="font-size:0.8rem;">Current Password</label>
+                    <input type="password" name="current_password" class="form-control" required placeholder="••••••••">
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                    <div>
+                        <label class="form-label" style="font-size:0.8rem;">New Password</label>
+                        <input type="password" name="new_password" class="form-control" required placeholder="Min 6 characters">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:0.8rem;">Confirm New Password</label>
+                        <input type="password" name="confirm_password" class="form-control" required placeholder="••••••••">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-outline" id="changePasswordBtn">Change Password</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Avatar upload and auto-submit
+    function previewImage(event) {
+        const input = event.target;
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('avatarPreview').src = e.target.result;
+                // Auto submit the form to save the uploaded image!
+                document.getElementById('avatarForm').submit();
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+        const darkActive = document.getElementById('darkModeToggle').checked;
+        if (darkActive) {
+            document.documentElement.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('dark-mode', 'true');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('dark-mode', 'false');
+            
+            // Turn off OLED too
+            if (document.getElementById('oledToggle').checked) {
+                document.getElementById('oledToggle').checked = false;
+                toggleOledMode();
+            }
+        }
+    }
+
+    // OLED Pitch Black Mode
+    function toggleOledMode() {
+        const oledActive = document.getElementById('oledToggle').checked;
+        if (oledActive) {
+            document.documentElement.style.setProperty('--bg-base', '#000000');
+            document.documentElement.style.setProperty('--bg-surface', '#05070a');
+            localStorage.setItem('oled-mode', 'true');
+            
+            // Turn on Dark Mode if turning on OLED
+            if (!document.getElementById('darkModeToggle').checked) {
+                document.getElementById('darkModeToggle').checked = true;
+                toggleDarkMode();
+            }
+        } else {
+            document.documentElement.style.setProperty('--bg-base', '#0b0f19');
+            document.documentElement.style.setProperty('--bg-surface', '#111827');
+            localStorage.removeItem('oled-mode');
+        }
+    }
+
+    // Accent Highlights (Crimson, Green, Purple, Amber)
+    function setAccent(color, element) {
+        document.querySelectorAll('.theme-preset').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
+        
+        document.documentElement.style.setProperty('--brand-red', color);
+        document.documentElement.style.setProperty('--primary', color);
+        localStorage.setItem('theme-accent', color);
+        
+        const glowColor = color === '#ff3d3d' ? 'rgba(255, 61, 61, 0.4)' : 
+                          color === '#10b981' ? 'rgba(16, 185, 129, 0.4)' : 
+                          color === '#4f46e5' ? 'rgba(79, 70, 229, 0.4)' : 'rgba(245, 158, 11, 0.4)';
+        document.documentElement.style.setProperty('--shadow-glow', glowColor);
+    }
+
+    // Load saved customisations
+    document.addEventListener('DOMContentLoaded', () => {
+        // Dark Mode state (default to true)
+        const dm = localStorage.getItem('dark-mode');
+        if (dm !== 'false') {
+            document.getElementById('darkModeToggle').checked = true;
+            toggleDarkMode();
+        } else {
+            document.getElementById('darkModeToggle').checked = false;
+        }
+
+        // OLED state
+        if (localStorage.getItem('oled-mode') === 'true') {
+            document.getElementById('oledToggle').checked = true;
+            toggleOledMode();
+        }
+        
+        // Accent color state
+        const savedAccent = localStorage.getItem('theme-accent');
+        if (savedAccent) {
+            const correspondingElement = document.querySelector(`.theme-preset[data-color="${savedAccent}"]`);
+            setAccent(savedAccent, correspondingElement);
+        }
+    });
+</script>
+{% endblock %}

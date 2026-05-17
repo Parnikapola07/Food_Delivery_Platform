@@ -17,11 +17,14 @@ def login(role):
         return redirect(url_for('user.home'))
 
     if current_user.is_authenticated:
-        if current_user.role == 'restaurant':
-            return redirect(url_for('restaurant.dashboard'))
-        elif current_user.role == 'delivery':
-            return redirect(url_for('delivery.dashboard'))
-        return redirect(url_for('user.home'))
+        if current_user.role == role:
+            if role == 'restaurant':
+                return redirect(url_for('restaurant.dashboard'))
+            elif role == 'delivery':
+                return redirect(url_for('delivery.dashboard'))
+            return redirect(url_for('user.home'))
+        else:
+            logout_user()
     
     if request.method == 'POST':
         email = request.form.get('email')
@@ -50,11 +53,14 @@ def register(role):
         return redirect(url_for('user.home'))
 
     if current_user.is_authenticated:
-        if current_user.role == 'restaurant':
-            return redirect(url_for('restaurant.dashboard'))
-        elif current_user.role == 'delivery':
-            return redirect(url_for('delivery.dashboard'))
-        return redirect(url_for('user.home'))
+        if current_user.role == role:
+            if role == 'restaurant':
+                return redirect(url_for('restaurant.dashboard'))
+            elif role == 'delivery':
+                return redirect(url_for('delivery.dashboard'))
+            return redirect(url_for('user.home'))
+        else:
+            logout_user()
         
     if request.method == 'POST':
         username = request.form.get('username')
@@ -89,3 +95,70 @@ def register(role):
 def logout():
     logout_user()
     return redirect(url_for('user.home'))
+
+import os
+from werkzeug.utils import secure_filename
+
+@auth_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    # Identify which layout template to extend
+    layout_template = 'base_user.html'
+    if current_user.role == 'restaurant':
+        layout_template = 'base_restaurant.html'
+    elif current_user.role == 'delivery':
+        layout_template = 'base_delivery.html'
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'update_profile':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            phone = request.form.get('phone')
+            address = request.form.get('address')
+            
+            # Check email availability
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user and existing_user.id != current_user.id:
+                flash('Email is already taken by another account.', 'danger')
+                return redirect(url_for('auth.profile'))
+                
+            # Handle profile pic file upload
+            profile_pic_file = request.files.get('profile_pic')
+            if profile_pic_file and profile_pic_file.filename != '':
+                filename = secure_filename(f"profile_{current_user.id}_{profile_pic_file.filename}")
+                upload_path = os.path.join('static', 'uploads')
+                os.makedirs(upload_path, exist_ok=True)
+                profile_pic_file.save(os.path.join(upload_path, filename))
+                current_user.profile_pic = f"/static/uploads/{filename}"
+                
+            current_user.username = username
+            current_user.email = email
+            current_user.phone = phone
+            current_user.address = address
+            
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
+            
+        elif action == 'change_password':
+            current_password = request.form.get('current_password')
+            new_password = request.form.get('new_password')
+            confirm_password = request.form.get('confirm_password')
+            
+            if not bcrypt.check_password_hash(current_user.password, current_password):
+                flash('Current password is incorrect.', 'danger')
+                return redirect(url_for('auth.profile'))
+                
+            if new_password != confirm_password:
+                flash('New passwords do not match.', 'danger')
+                return redirect(url_for('auth.profile'))
+                
+            hashed_pw = bcrypt.generate_password_hash(new_password).decode('utf-8')
+            current_user.password = hashed_pw
+            db.session.commit()
+            flash('Password changed successfully!', 'success')
+            
+        return redirect(url_for('auth.profile'))
+        
+    return render_template('auth/profile.html', layout_template=layout_template)

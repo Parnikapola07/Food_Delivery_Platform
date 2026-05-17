@@ -35,7 +35,10 @@
             <div id="cat-{{ category|lower|replace(' ', '-') }}">
                 <div class="menu-section-title">{{ category }}</div>
                 {% for item in menu_items if item.category == category %}
-                <div class="menu-item" id="item-{{ item.id }}">
+                <div class="menu-item {% if not item.is_active %}unavailable{% endif %}" id="item-{{ item.id }}" {% if not item.is_active %}style="opacity: 0.65; filter: grayscale(0.85); cursor: not-allowed; position: relative;"{% endif %}>
+                    {% if not item.is_active %}
+                    <span style="position: absolute; top: 12px; right: 12px; background: #ff4d4d; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; z-index: 2; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">Unavailable</span>
+                    {% endif %}
                     <div class="menu-item-info">
                         <h4>{{ item.name }}</h4>
                         <div class="menu-item-price">₹{{ '%.0f' % item.price }}</div>
@@ -43,7 +46,11 @@
                         <p class="meta" style="margin:.2rem 0 .65rem;line-height:1.5;">{{ item.description }}</p>
                         {% endif %}
 
-                        {% if item.id in cart_quantities %}
+                        {% if not item.is_active %}
+                            <div style="margin-top: .65rem;">
+                                <button class="btn btn-secondary btn-sm" disabled style="cursor: not-allowed; opacity: 0.8; font-weight: 600;">Unavailable</button>
+                            </div>
+                        {% elif item.id in cart_quantities %}
                             {% set cart_item = current_user.cart_items | selectattr("menu_item_id", "equalto", item.id) | first %}
                             <div class="qty-controls">
                                 <form action="{{ url_for('user.update_cart', cart_item_id=cart_item.id) }}" method="POST" style="margin:0;">

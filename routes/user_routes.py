@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import User, MenuItem, CartItem, Order, OrderItem, Review
 from extensions import db
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 
 user_bp = Blueprint('user', __name__)
 
@@ -25,8 +26,8 @@ def api_search():
     if not search:
         return {'restaurants': [], 'menu_items': [], 'grouped_results': []}
 
-    # 1. Search for matching menu items
-    menu_items = MenuItem.query.filter(
+    # 1. Search for matching menu items with eager loaded restaurant to avoid N+1 queries
+    menu_items = MenuItem.query.options(joinedload(MenuItem.restaurant)).filter(
         MenuItem.is_active == True,
         or_(
             MenuItem.name.ilike(f'%{search}%'),
@@ -40,7 +41,7 @@ def api_search():
     for item in menu_items:
         r_id = item.restaurant_id
         if r_id not in grouped_data:
-            restaurant = User.query.get(r_id)
+            restaurant = item.restaurant
             if restaurant:
                 grouped_data[r_id] = {
                     'restaurant_id': restaurant.id,
@@ -77,7 +78,7 @@ def api_search():
     # 3. Get user's cart if authenticated
     user_cart = {}
     if current_user.is_authenticated:
-        cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+        cart_items = CartItem.query.options(joinedload(CartItem.menu_item)).filter_by(user_id=current_user.id).all()
         for ci in cart_items:
             user_cart[ci.menu_item_id] = ci.quantity
 
@@ -97,7 +98,7 @@ def restaurant_detail(restaurant_id):
     cart_quantities = {}
     cart_item_ids = {}
     if current_user.is_authenticated:
-        cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+        cart_items = CartItem.query.options(joinedload(CartItem.menu_item)).filter_by(user_id=current_user.id).all()
         if cart_items:
             cart_restaurant_id = cart_items[0].menu_item.restaurant_id
             for item in cart_items:
@@ -114,7 +115,14 @@ def restaurant_detail(restaurant_id):
 def add_to_cart(menu_item_id):
     action = request.args.get('action', 'increase')
     menu_item = MenuItem.query.get_or_404(menu_item_id)
-    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    
+    if not menu_item.is_active:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return {'success': False, 'message': 'This item is currently unavailable.'}
+        flash('This item is currently unavailable.', 'warning')
+        return redirect(url_for('user.restaurant_detail', restaurant_id=menu_item.restaurant_id))
+        
+    cart_items = CartItem.query.options(joinedload(CartItem.menu_item)).filter_by(user_id=current_user.id).all()
     
     # Prevent adding from multiple restaurants
     if cart_items and cart_items[0].menu_item.restaurant_id != menu_item.restaurant_id:
@@ -161,12 +169,13 @@ def add_to_cart(menu_item_id):
 @user_bp.route('/cart')
 @login_required
 def cart():
-    cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
+    cart_items = CartItem.query.options(joinedload(CartItem.menu_item)).filter_by(user_id=current_user.id).all()
     subtotal = sum(item.menu_item.price * item.quantity for item in cart_items)
     delivery_fee = 5.0 if subtotal > 0 else 0
     platform_fee = 2.0 if subtotal > 0 else 0
     total = subtotal + delivery_fee + platform_fee
-    return render_template('user/cart.html', cart_items=cart_items, subtotal=subtotal, delivery_fee=delivery_fee, platform_fee=platform_fee, total=total)
+    has_unavailable = any(not item.menu_item.is_active for item in cart_items)
+    return render_template('user/cart.html', cart_items=cart_items, subtotal=subtotal, delivery_fee=delivery_fee, platform_fee=platform_fee, total=total, has_unavailable=has_unavailable)
 
 @user_bp.route('/update_cart/<int:cart_item_id>', methods=['POST'])
 @login_required
@@ -177,6 +186,9 @@ def update_cart(cart_item_id):
         
     action = request.form.get('action')
     if action == 'increase':
+        if not cart_item.menu_item.is_active:
+            flash('This item is currently unavailable and cannot be increased.', 'warning')
+            return redirect(url_for('user.cart'))
         cart_item.quantity += 1
     elif action == 'decrease':
         cart_item.quantity -= 1
@@ -190,7 +202,7 @@ def update_cart(cart_item_id):
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         # Return updated totals and quantity
-        all_items = CartItem.query.filter_by(user_id=current_user.id).all()
+        all_items = CartItem.query.options(joinedload(CartItem.menu_item)).filter_by(user_id=current_user.id).all()
         subtotal = sum(item.menu_item.price * item.quantity for item in all_items)
         delivery_fee = 5.0 if subtotal > 0 else 0
         platform_fee = 2.0 if subtotal > 0 else 0
