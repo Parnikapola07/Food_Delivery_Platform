@@ -102,7 +102,7 @@
     Past Orders ({{ past_orders|length }})
 </h2>
 {% for order in past_orders %}
-<div class="panel" style="padding:1.1rem;margin-bottom:.75rem;opacity:{% if order.status == 'Rejected' %}0.7{% else %}1{% endif %};" id="order-{{ order.id }}">
+<div class="panel {{ 'order-rejected' if order.status == 'Rejected' else '' }}" style="padding:1.1rem;margin-bottom:.75rem;" id="order-{{ order.id }}">
     <div class="flex-between" style="flex-wrap:wrap;gap:.65rem;">
         <div>
             <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-400);">
